@@ -13,9 +13,11 @@ public class RendezVous {
     private Long id;
 
     private Long demandeId;
-
     private LocalDateTime dateProposee;
     private boolean modifie;
     private boolean confirme;
     private LocalDateTime dateModification;
+    private String nomEmploye;
+    private String prenomEmploye;
+    private String emailEmploye;
 }

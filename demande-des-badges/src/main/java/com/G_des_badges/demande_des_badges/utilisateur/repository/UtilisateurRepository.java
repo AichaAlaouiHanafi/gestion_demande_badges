@@ -20,4 +20,6 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     List<Utilisateur> findByDepartementIdAndRole(
             @Param("departementId") Long departementId,
             @Param("role") Role role);
+
+    List<Utilisateur> findByRole(Role role);
 }

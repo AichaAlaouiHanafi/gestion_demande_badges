@@ -2,38 +2,42 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Auth pages
-import LoginPage from './pages/auth/LoginPage';
-import SignUpPage from './pages/auth/SignUpPage';
-import SignUpSuccess from './pages/auth/SignUpSuccess';
-import CreatePasswordPage from './pages/auth/createPasswordPage';
-import SignUpPending from './pages/auth/SignUpPending';
-
+import LoginPage from './pages/auth/LoginPage.jsx';
+import SignUpPage from './pages/auth/SignUpPage.jsx';
+import SignUpSuccess from './pages/auth/SignUpSuccess.jsx';
+import CreatePasswordPage from './pages/auth/createPasswordPage.jsx';
+import SignUpPending from './pages/auth/SignUpPending.jsx';
+import ProposerRdvPage from './pages/RDV/ProposerRdvPage.jsx';
+import MesRendezVous from './pages/RDV/MesRendezVous.jsx';
+import SuperAdminRdvsPage from './pages/RDV/SuperAdminRdvsPage.jsx';
 // Layout
-import AppLayout from './pages/layout/AppLayout';
-
+import AppLayout from './pages/layout/AppLayout.jsx';
+import ListeDemandes from './pages/badges/ListeDemandes.jsx';
 // Admin
-import ProfileAdmin from './pages/profiles/admin/ProfileAdmin';
-import InscriptionPage from './pages/inscription/inscriptions';
+import ProfileAdmin from './pages/profiles/admin/ProfileAdmin.jsx';
+import InscriptionPage from './pages/inscription/inscriptions.jsx';
 
 // Employee
-import ProfileEmployee from './pages/profiles/employee/ProfileEmployee';
+import ProfileEmployee from './pages/profiles/employee/ProfileEmployee.jsx';
 
 // SuperAdmin
-import ProfileSuperAdmin from './pages/profiles/superAdmin/ProfileSuperAdmin';
+import ProfileSuperAdmin from './pages/profiles/superAdmin/ProfileSuperAdmin.jsx';
 
 // Badges
-import DemandeBadgeForm from './pages/badges/DemandeBadgeForm';
-import ListeBadgesEmploye from './pages/badges/ListeBadgesEmploye';
-import ValidationFormAdmin from './pages/badges/ValidationFormAdmin';
+import DemandeBadgeForm from './pages/badges/DemandeBadgeForm.jsx';
+import ListeBadgesEmploye from './pages/badges/ListeBadgesEmploye.jsx';
+import ValidationFormAdmin from './pages/badges/ValidationFormAdmin.jsx';
+import DemandeBadgePage from './pages/badges/DemandeBadgePage.jsx';
 
 // Notifications
-import NotificationPage from './pages/notifications/NotificationPage';
+import NotificationPage from './pages/notifications/NotificationPage.jsx';
 
 // ProtectedRoute
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 
 // Pages personnalisées
 import UtilisateurPage from './pages/utilisateur/UtilisateurPage.jsx';
+import DepartementEmployesPage from './pages/Departement/DepartementEmployesPage.jsx';
 
 const AppRoutes = () => {
   return (
@@ -52,8 +56,9 @@ const AppRoutes = () => {
           <Route index element={<ProfileEmployee />} />
           <Route path="profile" element={<ProfileEmployee />} />
           <Route path="badges" element={<ListeBadgesEmploye />} />
-          <Route path="demandes" element={<DemandeBadgeForm />} />
-          <Route path="rdvs" element={<div>Employee RDVs Page</div>} />
+          <Route path="demandes" element={<DemandeBadgePage />} />
+          <Route path="demandes" element={<ListeDemandes />} />
+          <Route path="rdvs" element={<MesRendezVous />} />
           <Route path="notifications" element={<NotificationPage />} />
         </Route>
       </Route>
@@ -64,29 +69,29 @@ const AppRoutes = () => {
           <Route index element={<ProfileAdmin />} />
           <Route path="profile" element={<ProfileAdmin />} />
           <Route path="badges" element={<ValidationFormAdmin />} />
-          <Route path="demandes" element={<div>Admin Demandes Page</div>} />
+          <Route path="demandes" element={<ValidationFormAdmin />} />
           <Route path="rdvs" element={<div>Admin RDVs Page</div>} />
           <Route path="notifications" element={<NotificationPage />} />
-          <Route path="utilisateurs" element={<div>Admin Utilisateurs Page</div>} />
+          <Route path="demandes" element={<ListeDemandes />} />
+          <Route path="utilisateurs" element={<UtilisateurPage />} />
           <Route path="inscription" element={<InscriptionPage />} />
         </Route>
       </Route>
-
-      {/* SUPERADMIN */}
       <Route path="/superadmin" element={<ProtectedRoute allowedRoles={['SUPERADMIN']} />}>
-        <Route element={<AppLayout />}>
-          <Route index element={<ProfileSuperAdmin />} />
-          <Route path="profile" element={<ProfileSuperAdmin />} />
-          <Route path="badges" element={<ValidationFormAdmin />} />
-          <Route path="demandes" element={<div>SuperAdmin Demandes Page</div>} />
-          <Route path="rdvs" element={<div>SuperAdmin RDVs Page</div>} />
-          <Route path="notifications" element={<NotificationPage />} />
-          <Route path="utilisateurs" element={<UtilisateurPage />} />
-          <Route path="roles" element={<div>SuperAdmin Roles Page</div>} />
-          <Route path="departements" element={<div>SuperAdmin Departements Page</div>} />
-        </Route>
-      </Route>
-
+  <Route element={<AppLayout />}>
+    <Route index element={<ProfileSuperAdmin />} />
+    <Route path="profile" element={<ProfileSuperAdmin />} />
+    <Route path="badges" element={<ValidationFormAdmin />} />
+   
+    <Route path="demandes" element={<ListeDemandes />} />
+    <Route path="rdvs" element={<SuperAdminRdvsPage />} />
+    <Route path="rdv/proposer/:demandeId" element={<ProposerRdvPage />} />
+    <Route path="notifications" element={<NotificationPage />} />
+    <Route path="utilisateurs" element={<UtilisateurPage />} />
+   
+    <Route path="departements" element={<DepartementEmployesPage/>} />
+  </Route>
+</Route>
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />

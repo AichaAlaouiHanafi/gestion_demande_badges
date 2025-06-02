@@ -1,4 +1,17 @@
 package com.G_des_badges.demande_des_badges.model;
 
-public class StatutDemande {
+public enum StatutDemande {
+    DEMANDE_INITIALE,
+    VALIDATION_ADMIN,
+    FORMULAIRE_REMPLI,
+    VALIDATION_SUPERADMIN,
+    RDV_PROPOSE,
+    RDV_MODIFIE,
+    RDV_CONFIRME,
+    NOTIF_CONFIRMATION,
+    RAPPEL_RDV,
+    RECUPERATION_CONFIRME,
+    DEPOT_DEMANDE,
+    RECUPERATION_DEMANDE,
+    REFUSEE
 }

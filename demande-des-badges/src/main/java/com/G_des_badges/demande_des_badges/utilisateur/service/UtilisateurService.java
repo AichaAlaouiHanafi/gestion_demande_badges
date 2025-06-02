@@ -6,6 +6,8 @@ import com.G_des_badges.demande_des_badges.departement.repository.DepartementRep
 import com.G_des_badges.demande_des_badges.model.Role;
 import com.G_des_badges.demande_des_badges.utilisateur.entity.Utilisateur;
 import com.G_des_badges.demande_des_badges.utilisateur.repository.UtilisateurRepository;
+import com.G_des_badges.demande_des_badges.notification.entity.Notification;
+import com.G_des_badges.demande_des_badges.notification.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,15 +28,18 @@ public class UtilisateurService {
     private final DepartementRepository departementRepository;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationRepository notificationRepository;
 
     public UtilisateurService(UtilisateurRepository utilisateurRepository,
                               DepartementRepository departementRepository,
                               JavaMailSender mailSender,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              NotificationRepository notificationRepository) {
         this.utilisateurRepository = utilisateurRepository;
         this.departementRepository = departementRepository;
         this.mailSender = mailSender;
         this.passwordEncoder = passwordEncoder;
+        this.notificationRepository = notificationRepository;
     }
 
     public void signup(SignupRequestDTO dto) {
@@ -51,6 +56,11 @@ public class UtilisateurService {
         user.setDepartement(departement);
 
         utilisateurRepository.save(user);
+
+        // Ajout de la notification d'inscription en attente
+        String notifMsg = "Nouvelle inscription en attente : " + user.getNom() + " " + user.getPrenom();
+        Notification notif = new Notification("SIGNUP", notifMsg, null); // null = notification globale
+        notificationRepository.save(notif);
     }
 
     public List<Utilisateur> getPendingRegistrations() {

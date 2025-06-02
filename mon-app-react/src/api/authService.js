@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8081/api';
 
 // Désactiver withCredentials
 axios.defaults.withCredentials = false;
@@ -153,7 +153,7 @@ export const authService = {
         }
       });
     } catch (error) {
-      console.error('Erreur lors de la suppression de l’utilisateur:', error);
+      console.error('Erreur lors de la suppression de l\'utilisateur:', error);
       throw error;
     }
   },
@@ -258,6 +258,57 @@ export const authService = {
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'utilisateur:', error);
       return null;
+    }
+  },
+
+  updateProfile: async (userData) => {
+    const token = localStorage.getItem('token');
+    try {
+      console.log('=== Détails de la requête ===');
+      console.log('Token JWT:', token);
+      console.log('Token décodé:', token ? JSON.parse(atob(token.split('.')[1])) : 'Pas de token');
+      console.log('URL:', `${API_URL}/utilisateurs/${userData.id}`);
+      console.log('Données envoyées:', userData);
+      console.log('Headers:', {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      });
+      
+      const response = await axios.put(`${API_URL}/utilisateurs/${userData.id}`, userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response;
+    } catch (error) {
+      console.log('=== Détails de l\'erreur ===');
+      console.log('Status:', error.response?.status);
+      console.log('Message d\'erreur:', error.response?.data?.message || error.message);
+      console.log('Données d\'erreur:', error.response?.data);
+      console.log('Headers de réponse:', error.response?.headers);
+      console.log('Configuration de la requête:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: {
+          ...error.config?.headers,
+          Authorization: error.config?.headers?.Authorization ? 'Bearer [MASKED]' : undefined
+        }
+      });
+      
+      // Vérifier si le token est expiré
+      if (token) {
+        try {
+          const tokenData = JSON.parse(atob(token.split('.')[1]));
+          const expirationDate = new Date(tokenData.exp * 1000);
+          console.log('Token expiration:', expirationDate);
+          console.log('Token est expiré:', expirationDate < new Date());
+        } catch (e) {
+          console.log('Erreur lors du décodage du token:', e);
+        }
+      }
+      
+      throw error;
     }
   }
 };

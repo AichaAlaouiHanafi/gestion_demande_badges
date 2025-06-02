@@ -10,5 +10,8 @@ public interface RdvService {
     RdvResponseDTO proposerRdv(ProposerRdvDTO dto);
     RdvResponseDTO modifierRdv(ModifierRdvDTO dto);
     RdvResponseDTO confirmerRdv(Long rdvId);
+    RdvResponseDTO refuserRdv(Long rdvId);
     List<RdvResponseDTO> getRdvsByDemande(Long demandeId);
+    List<RdvResponseDTO> getRdvsByUtilisateur(Long utilisateurId);
+    List<RdvResponseDTO> getAllRdvs();
 }

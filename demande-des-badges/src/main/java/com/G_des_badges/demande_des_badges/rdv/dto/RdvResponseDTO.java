@@ -11,4 +11,7 @@ public class RdvResponseDTO {
     private LocalDateTime dateProposee;
     private boolean modifie;
     private boolean confirme;
+    private String nomEmploye;
+    private String prenomEmploye;
+    private String emailEmploye;
 }

@@ -15,11 +15,7 @@ const UtilisateurPage = () => {
 
 
   useEffect(() => {
-    if (!token) {
-      console.log("Aucun token trouvé, redirection vers login");
-      navigate('/login');
-      return;
-    }
+    
 
     if (role !== 'SUPERADMIN' && role !== 'ADMIN') {
       console.log("Rôle insuffisant pour accéder à cette page");

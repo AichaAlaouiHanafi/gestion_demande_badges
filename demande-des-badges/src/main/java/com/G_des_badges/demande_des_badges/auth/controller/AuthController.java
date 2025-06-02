@@ -2,7 +2,7 @@ package com.G_des_badges.demande_des_badges.auth.controller;
 
 import com.G_des_badges.demande_des_badges.auth.dto.*;
 import com.G_des_badges.demande_des_badges.departement.dto.DepartementDTO;
-import com.G_des_badges.demande_des_badges.departement.entity.Departement;
+//import com.G_des_badges.demande_des_badges.departement.entity.Departement;
 import com.G_des_badges.demande_des_badges.departement.repository.DepartementRepository;
 import com.G_des_badges.demande_des_badges.auth.security.JwtUtils;
 import com.G_des_badges.demande_des_badges.utilisateur.dto.UtilisateurResponseDTO;
@@ -11,10 +11,10 @@ import com.G_des_badges.demande_des_badges.utilisateur.repository.UtilisateurRep
 import com.G_des_badges.demande_des_badges.utilisateur.service.UtilisateurService;
 import jakarta.validation.Valid;
 import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.Token;
+//import org.antlr.v4.runtime.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+//import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

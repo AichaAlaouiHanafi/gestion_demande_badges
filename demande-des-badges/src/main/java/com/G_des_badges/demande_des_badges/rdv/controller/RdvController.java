@@ -30,9 +30,22 @@ public class RdvController {
     public RdvResponseDTO confirmer(@PathVariable Long rdvId) {
         return rdvService.confirmerRdv(rdvId);
     }
-
+    @PutMapping("/refuser/{rdvId}")
+    public RdvResponseDTO refuser(@PathVariable Long rdvId) {
+        return rdvService.refuserRdv(rdvId);
+    }
     @GetMapping("/demande/{demandeId}")
     public List<RdvResponseDTO> getByDemande(@PathVariable Long demandeId) {
         return rdvService.getRdvsByDemande(demandeId);
+    }
+
+    @GetMapping("/utilisateur/{userId}")
+    public List<RdvResponseDTO> getByUtilisateur(@PathVariable Long userId) {
+        return rdvService.getRdvsByUtilisateur(userId);
+    }
+
+    @GetMapping
+    public List<RdvResponseDTO> getAllRdvs() {
+        return rdvService.getAllRdvs();
     }
 }

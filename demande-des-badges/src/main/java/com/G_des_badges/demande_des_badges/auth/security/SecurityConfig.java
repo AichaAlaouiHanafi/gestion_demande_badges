@@ -32,7 +32,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/departments", "/error").permitAll()
                         .requestMatchers("/api/utilisateurs/visible").hasAnyRole("SUPERADMIN", "ADMIN")
-                        .requestMatchers("/api/utilisateurs/**").hasRole("SUPERADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
