@@ -22,7 +22,7 @@ import ProfileEmployee from './pages/profiles/employee/ProfileEmployee.jsx';
 
 // SuperAdmin
 import ProfileSuperAdmin from './pages/profiles/superAdmin/ProfileSuperAdmin.jsx';
-
+import AjouterUtilisateur from './pages/utilisateur/AjouterUtilisateur.jsx';
 // Badges
 import DemandeBadgeForm from './pages/badges/DemandeBadgeForm.jsx';
 import ListeBadgesEmploye from './pages/badges/ListeBadgesEmploye.jsx';
@@ -34,6 +34,8 @@ import NotificationPage from './pages/notifications/NotificationPage.jsx';
 
 // ProtectedRoute
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
+import ModifierUtilisateur from './pages/utilisateur/ModifierUtilisateur.jsx';
+
 
 // Pages personnalisées
 import UtilisateurPage from './pages/utilisateur/UtilisateurPage.jsx';
@@ -64,7 +66,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* ADMIN */}
-      <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']} />}>
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route element={<AppLayout />}>
           <Route index element={<ProfileAdmin />} />
           <Route path="profile" element={<ProfileAdmin />} />
@@ -75,6 +77,8 @@ const AppRoutes = () => {
           <Route path="demandes" element={<ListeDemandes />} />
           <Route path="utilisateurs" element={<UtilisateurPage />} />
           <Route path="inscription" element={<InscriptionPage />} />
+          <Route path="/admin/utilisateurs/edit/:id" element={<ModifierUtilisateur />} />
+          <Route path="/admin/utilisateurs/ajouter" element={<AjouterUtilisateur />} />
         </Route>
       </Route>
       <Route path="/superadmin" element={<ProtectedRoute allowedRoles={['SUPERADMIN']} />}>
@@ -82,7 +86,8 @@ const AppRoutes = () => {
     <Route index element={<ProfileSuperAdmin />} />
     <Route path="profile" element={<ProfileSuperAdmin />} />
     <Route path="badges" element={<ValidationFormAdmin />} />
-   
+    <Route path="/superadmin/utilisateurs/edit/:id" element={<ModifierUtilisateur />} />
+    <Route path="/superadmin/utilisateurs/ajouter" element={<AjouterUtilisateur />} />
     <Route path="demandes" element={<ListeDemandes />} />
     <Route path="rdvs" element={<SuperAdminRdvsPage />} />
     <Route path="rdv/proposer/:demandeId" element={<ProposerRdvPage />} />

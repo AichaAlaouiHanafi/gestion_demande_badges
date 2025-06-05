@@ -35,6 +35,7 @@ public class DemandeController {
     public ResponseEntity<?> demanderBadge(@RequestBody DemandeRequestDTO dto) {
         DemandeResponseDTO demande = demandeService.demanderBadge(dto);
         Map<String, Object> response = new HashMap<>();
+        demande.setFormulaire(dto.getFormulaire());
         response.put("demande", demande);
         response.put("message", "Votre demande a été transmise à l'admin. Vous serez notifié après validation. (Un email a été envoyé aux admins)");
         return ResponseEntity.ok(response);
@@ -64,11 +65,11 @@ public class DemandeController {
     public ResponseEntity<?> getFormulairePourEmploye(@PathVariable Long demandeId) {
         Demande demande = demandeRepository.findById(demandeId)
             .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
-        if (demande.getStatut() != StatutDemande.VALIDATION_ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Formulaire non accessible tant que la demande n'est pas validée par l'admin.");
+        String formulaire = demande.getFormulaire();
+        if (formulaire == null || formulaire.isEmpty()) {
+            formulaire = "{}";
         }
-        return ResponseEntity.ok(demande.getFormulaire());
+        return ResponseEntity.ok(formulaire);
     }
 
     @PutMapping("/{id}/formulaire")
@@ -96,5 +97,15 @@ public class DemandeController {
     @PutMapping("/{id}/refuser")
     public DemandeResponseDTO refuserDemande(@PathVariable Long id) {
         return demandeService.refuserDemande(id);
+    }
+
+    @PutMapping("/{demandeId}/rappel")
+    public ResponseEntity<?> configurerRappelDemande(@PathVariable Long demandeId, @RequestBody Map<String, Integer> body) {
+        Integer delaiRappel = body.get("delaiRappel");
+        if (delaiRappel == null || (delaiRappel != 2 && delaiRappel != 24 && delaiRappel != 48)) {
+            return ResponseEntity.badRequest().body("Délai de rappel invalide. Valeurs autorisées : 2, 24, 48 heures");
+        }
+        demandeService.configurerRappelDemande(demandeId, delaiRappel);
+        return ResponseEntity.ok().build();
     }
 }

@@ -11,6 +11,8 @@ import com.G_des_badges.demande_des_badges.model.StatutDemande;
 import com.G_des_badges.demande_des_badges.notification.entity.Notification;
 import com.G_des_badges.demande_des_badges.notification.repository.NotificationRepository;
 import com.G_des_badges.demande_des_badges.model.TypeDemande;
+import com.G_des_badges.demande_des_badges.rdv.repository.RdvRepository;
+import com.G_des_badges.demande_des_badges.rdv.entity.RendezVous;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +41,15 @@ public class DemandeServiceImpl implements DemandeService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private RdvRepository rdvRepository;
+
     @Override
     public DemandeResponseDTO demanderBadge(DemandeRequestDTO dto) {
+        System.out.println("[DEBUG] demanderBadge appelée !");
         logger.info("[DEMANDE BADGE] Nouvelle demande reçue pour utilisateurId={}.", dto.getUtilisateurId());
+        logger.info("[DEMANDE BADGE] Type reçu : {}", dto.getType());
+        logger.info("[DEMANDE BADGE] Formulaire reçu : {}", dto.getFormulaire());
         Demande demande = new Demande();
         demande.setUtilisateurId(dto.getUtilisateurId());
         demande.setFormulaire(dto.getFormulaire());
@@ -58,6 +66,7 @@ public class DemandeServiceImpl implements DemandeService {
             demande.setType(TypeDemande.BADGE);
         }
         Demande savedDemande = demandeRepository.save(demande);
+        logger.info("[DEMANDE BADGE] Formulaire sauvegardé en base : {}", savedDemande.getFormulaire());
 
         // Notifier tous les admins par email
         List<Utilisateur> admins = utilisateurRepository.findByRole(Role.ADMIN);
@@ -95,6 +104,7 @@ public class DemandeServiceImpl implements DemandeService {
         }
         Notification notif = new Notification("BADGE_REQUEST", notifMsg, null); // null = notification globale
         notificationRepository.save(notif);
+        System.out.println("[NOTIF] Créée BADGE_REQUEST : " + notifMsg);
         logger.info("[NOTIF] Notification BADGE_REQUEST ajoutée !");
         return mapToDto(savedDemande);
     }
@@ -104,8 +114,27 @@ public class DemandeServiceImpl implements DemandeService {
         Demande demande = demandeRepository.findById(id).orElseThrow();
         demande.setStatut(StatutDemande.VALIDATION_ADMIN);
         demande.setDateValidationAdmin(LocalDateTime.now());
-        return mapToDto(demandeRepository.save(demande));
+        Demande saved = demandeRepository.save(demande);
+        // Notification à l'employé : badge accepté par admin
+        Notification notif = new Notification(
+            "BADGE_ACCEPTE_ADMIN",
+            "Votre badge a été accepté par l'administrateur.",
+            demande.getUtilisateurId()
+        );
+        notificationRepository.save(notif);
+        // Notification à tous les superAdmins : demande à valider
+        List<Utilisateur> superAdmins = utilisateurRepository.findByRole(Role.SUPERADMIN);
+        for (Utilisateur superAdmin : superAdmins) {
+            Notification notifSuper = new Notification(
+                "DEMANDE_A_VALIDER_SUPERADMIN",
+                "Nouvelle demande de badge à valider par le superAdmin.",
+                superAdmin.getId()
+            );
+            notificationRepository.save(notifSuper);
+        }
+        return mapToDto(saved);
     }
+
     @Override
     public DemandeResponseDTO refuserDemande(Long id) {
         Demande demande = demandeRepository.findById(id)
@@ -114,12 +143,20 @@ public class DemandeServiceImpl implements DemandeService {
         Demande saved = demandeRepository.save(demande);
         return mapToDto(saved);
     }
+
     @Override
     public DemandeResponseDTO validerFormulaireParAdmin(Long id) {
         Demande demande = demandeRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
         demande.setStatut(StatutDemande.VALIDATION_ADMIN); // <-- Cette ligne est indispensable !
         Demande saved = demandeRepository.save(demande);
+        // Notification à l'employé : badge accepté par admin (optionnel si besoin)
+        Notification notif = new Notification(
+            "BADGE_ACCEPTE_ADMIN",
+            "Votre badge a été accepté par l'administrateur.",
+            demande.getUtilisateurId()
+        );
+        notificationRepository.save(notif);
         return mapToDto(saved);
     }
 
@@ -129,6 +166,13 @@ public class DemandeServiceImpl implements DemandeService {
             .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
         demande.setStatut(StatutDemande.VALIDATION_SUPERADMIN);
         Demande saved = demandeRepository.save(demande);
+        // Notification à l'employé : badge accepté par superAdmin
+        Notification notif = new Notification(
+            "BADGE_ACCEPTE_SUPERADMIN",
+            "Votre badge a été accepté par le super administrateur.",
+            demande.getUtilisateurId()
+        );
+        notificationRepository.save(notif);
         return mapToDto(saved);
     }
 
@@ -149,6 +193,7 @@ public class DemandeServiceImpl implements DemandeService {
         dto.setFormulaire(demande.getFormulaire());
         dto.setStatut(demande.getStatut());
         dto.setType(demande.getType());
+        dto.setDelaiRappel(demande.getDelaiRappel());
         // Ajout nom et prénom utilisateur
         Utilisateur user = utilisateurRepository.findById(demande.getUtilisateurId()).orElse(null);
         if (user != null) {
@@ -212,5 +257,15 @@ public class DemandeServiceImpl implements DemandeService {
         Demande demande = demandeRepository.findById(demandeId).orElseThrow();
         demande.setStatut(StatutDemande.RECUPERATION_DEMANDE);
         demandeRepository.save(demande);
+    }
+
+    // Nouvelle méthode pour configurer le rappel sur une Demande (dépôt/récupération)
+    public void configurerRappelDemande(Long demandeId, Integer delaiRappel) {
+        // Chercher le rendez-vous associé à la demande
+        List<RendezVous> rdvs = rdvRepository.findByDemandeId(demandeId);
+        if (rdvs.isEmpty()) throw new RuntimeException("Aucun rendez-vous associé à cette demande");
+        RendezVous rdv = rdvs.get(0); // On prend le premier (cas général : un seul rdv par demande)
+        rdv.setDelaiRappel(delaiRappel);
+        rdvRepository.save(rdv);
     }
 }

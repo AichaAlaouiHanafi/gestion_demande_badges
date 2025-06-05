@@ -23,4 +23,5 @@ public interface DemandeService {
     void setStatutRecuperationConfirme(Long demandeId);
     void setStatutDepotDemande(Long demandeId);
     void setStatutRecuperationDemande(Long demandeId);
+    void configurerRappelDemande(Long demandeId, Integer delaiRappel);
 }

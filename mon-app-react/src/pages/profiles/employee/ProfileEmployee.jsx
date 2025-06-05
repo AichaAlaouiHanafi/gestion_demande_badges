@@ -28,25 +28,11 @@ const ProfilePage = () => {
   return (
     <div style={{ maxWidth: 500, margin: 'auto', background: '#fff', padding: 20, borderRadius: 8 }}>
       <h2>Mon profil</h2>
-      {!editMode ? (
-        <>
-          <p><b>Nom :</b> {user.nom}</p>
-          <p><b>Prénom :</b> {user.prenom}</p>
-          <p><b>Email :</b> {user.email}</p>
-          <p><b>Rôle :</b> {user.role}</p>
-          <p><b>Département :</b> {user.departement?.nomDepartement || 'Non défini'}</p>
-          <button onClick={() => setEditMode(true)}>Modifier</button>
-        </>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <label>Nom : <input name="nom" value={form.nom} onChange={handleChange} /></label><br />
-          <label>Prénom : <input name="prenom" value={form.prenom} onChange={handleChange} /></label><br />
-          <label>Email : <input name="email" value={form.email} onChange={handleChange} disabled /></label><br />
-          {/* Ajoute d'autres champs si besoin */}
-          <button type="submit">Enregistrer</button>
-          <button type="button" onClick={() => setEditMode(false)} style={{ marginLeft: 10 }}>Annuler</button>
-        </form>
-      )}
+      <p><b>Nom :</b> {user.nom}</p>
+      <p><b>Prénom :</b> {user.prenom}</p>
+      <p><b>Email :</b> {user.email}</p>
+      <p><b>Rôle :</b> {user.role}</p>
+      <p><b>Département :</b> {user.departement?.nomDepartement || 'Non défini'}</p>
     </div>
   );
 };

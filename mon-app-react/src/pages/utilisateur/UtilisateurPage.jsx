@@ -119,7 +119,7 @@ const UtilisateurPage = () => {
     <div style={{ padding: '2rem' }}>
       <h2>Liste des utilisateurs visibles</h2>
 
-      {role === "SUPERADMIN" && (
+      {(role === "SUPERADMIN" || role === "ADMIN") && (
         <button
           onClick={() => navigate('/superadmin/utilisateurs/ajouter')}
           style={{
@@ -139,7 +139,7 @@ const UtilisateurPage = () => {
       {utilisateurs.length === 0 ? (
         <p>Aucun utilisateur trouvé.</p>
       ) : (
-        <table border="1" cellPadding="10" cellSpacing="0" width="100%">
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               <th>ID</th>
@@ -153,7 +153,7 @@ const UtilisateurPage = () => {
             </tr>
           </thead>
           <tbody>
-            {utilisateurs.map(user => (
+            {utilisateurs.map((user) => (
               <tr key={user.id}>
                 <td>{user.id}</td>
                 <td>{user.nom}</td>
@@ -163,18 +163,43 @@ const UtilisateurPage = () => {
                 <td>{user.nomDepartement || 'Non défini'}</td>
                 <td>{user.position || 'Non défini'}</td>
                 <td>
-                  <button
-                    onClick={() => handleEdit(user)}
-                    style={{ marginRight: '10px', backgroundColor: '#2196F3', color: 'white', border: 'none', padding: '5px 10px' }}
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    style={{ backgroundColor: '#f44336', color: 'white', border: 'none', padding: '5px 10px' }}
-                  >
-                    Supprimer
-                  </button>
+                  {(role === "SUPERADMIN" || role === "ADMIN") && (
+                    <>
+                      <button
+                        onClick={() => navigate(`/superadmin/utilisateurs/edit/${user.id}`)}
+                        style={{
+                          marginRight: '5px',
+                          padding: '5px 10px',
+                          backgroundColor: '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Modifier
+                      </button>
+                      {(role === "SUPERADMIN" || role === "ADMIN") && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+                              handleDelete(user.id);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Supprimer
+                        </button>
+                      )}
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

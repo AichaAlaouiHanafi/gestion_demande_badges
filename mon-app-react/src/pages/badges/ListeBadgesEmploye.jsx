@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 
 const steps = [
   { key: 'DEMANDE_INITIALE', label: 'Demande initiale' },
-  { key: 'VALIDATION_ADMIN', label: 'Validation Admin' },
   { key: 'FORMULAIRE_REMPLI', label: 'Formulaire rempli' },
+  { key: 'VALIDATION_ADMIN', label: 'Validation Admin' },
   { key: 'VALIDATION_SUPERADMIN', label: 'Validation SuperAdmin' },
   { key: 'RDV_PROPOSE', label: 'Proposition de RDV' },
   { key: 'RDV_MODIFIE', label: 'Modification de RDV' },
-  { key: 'RDV_CONFIRME', label: 'Confirmation du RDV' },
-  { key: 'NOTIF_CONFIRMATION', label: 'Notification de confirmation' },
-  { key: 'RAPPEL_RDV', label: 'Rappel automatique' },
-  { key: 'RECUPERATION_CONFIRME', label: 'Confirmation de récupération' },
-  { key: 'DEPOT_DEMANDE', label: 'Demande de dépôt du badge' },
-  { key: 'RECUPERATION_DEMANDE', label: 'Demande de récupération du badge' }
+  { key: 'RDV_CONFIRME', label: 'Confirmation du RDV' }
 ];
+
+const typeLabel = {
+  'BADGE': 'Demande de badge',
+  'DEPOT': 'Demande de dépôt',
+  'RECUPERATION': 'Demande de récupération'
+};
 
 const ListeBadgesEmploye = () => {
   const [badges, setBadges] = useState([]);
@@ -43,7 +44,7 @@ const ListeBadgesEmploye = () => {
       ) : (
         demandes.map((demande) => (
           <div key={demande.id} style={{ marginBottom: 40, border: '1px solid #ddd', borderRadius: 8, padding: 20 }}>
-            <h4>Demande #{demande.id}</h4>
+            <h4>Demande #{demande.id} <span style={{fontWeight: 'normal', color: '#888'}}>- {typeLabel[demande.type] || demande.type}</span></h4>
             <Roadmap statut={demande.statut} />
             {badges.filter(b => b.utilisateurId === demande.utilisateurId).length > 0 && (
               <div style={{ marginTop: 10, color: 'green' }}>Badge attribué : {badges.find(b => b.utilisateurId === demande.utilisateurId).numero}</div>

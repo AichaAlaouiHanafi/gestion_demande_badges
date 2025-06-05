@@ -44,11 +44,8 @@ const DemandeBadgePage = () => {
           setDemandeId(demandeEnCours.id);
           setDemandeType(demandeEnCours.type);
           setStatut(demandeEnCours.statut);
-          if (demandeEnCours.statut === 'DEMANDE_INITIALE') {
-            setShowForm(false);
-          } else if (demandeEnCours.statut === 'VALIDATION_ADMIN') {
-            setShowForm(true);
-          }
+          // Afficher le formulaire dès qu'une demande existe
+          setShowForm(true);
         }
       } catch (err) {
         setError("Erreur lors du chargement de vos demandes");
@@ -74,10 +71,10 @@ const DemandeBadgePage = () => {
       setDemandeId(response.data.demande.id);
       setDemandeType(typeDemande);
       // On ne montre pas le formulaire immédiatement
-      setShowForm(false);
+      setShowForm(true);
       setError(null);
       // Afficher un message de confirmation
-      setMessage("Votre demande a été transmise à l'administrateur. Vous recevrez une notification une fois la demande validée.");
+      //setMessage("Votre demande a été transmise à l'administrateur. Vous recevrez une notification une fois la demande validée.");
     } catch (err) {
       setError("Erreur lors de la création de la demande");
       console.error("Erreur handleNouvelleDemande:", err);
@@ -162,19 +159,27 @@ const DemandeBadgePage = () => {
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
-        <button 
-          onClick={handleNouvelleDemande}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Démarrer la demande
-        </button>
+        {typeDemande === 'BADGE' && (
+          <button 
+            onClick={handleNouvelleDemande}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Démarrer la demande
+          </button>
+        )}
+        {typeDemande === 'DEPOT' && (
+          <DepotBadgeForm onSubmit={handleSubmitForm} />
+        )}
+        {typeDemande === 'RECUPERATION' && (
+          <RecuperationBadgeForm onSubmit={handleSubmitForm} />
+        )}
         {message && <p style={{ marginTop: '20px', color: 'green' }}>{message}</p>}
       </div>
     );

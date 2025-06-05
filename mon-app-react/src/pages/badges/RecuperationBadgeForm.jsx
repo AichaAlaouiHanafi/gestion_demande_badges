@@ -19,6 +19,7 @@ const RecuperationBadgeForm = ({ onSubmit }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    console.log("Soumission du formulaire !");
     setLoading(true);
     setMessage('');
     try {

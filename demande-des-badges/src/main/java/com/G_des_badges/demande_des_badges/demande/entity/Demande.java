@@ -25,9 +25,12 @@ public class Demande {
     private TypeDemande type;
 
     @Column(columnDefinition = "TEXT")
-    private String formulaire; // contenu ou URL
+    private String formulaire;
 
     private LocalDateTime dateDemande;
     private LocalDateTime dateValidationAdmin;
     private LocalDateTime dateValidationSuperAdmin;
+
+    // Délai de rappel choisi par l'employé (en heures)
+    private Integer delaiRappel;
 }

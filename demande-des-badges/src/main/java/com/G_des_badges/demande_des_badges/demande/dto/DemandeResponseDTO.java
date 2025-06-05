@@ -11,6 +11,7 @@ public class DemandeResponseDTO {
     private StatutDemande statut;
     private String formulaire;
     private TypeDemande type;
+    private Integer delaiRappel;
     private String nomUtilisateur;
     private String prenomUtilisateur;
     private String emailUtilisateur;

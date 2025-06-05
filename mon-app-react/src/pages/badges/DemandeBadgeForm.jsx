@@ -50,8 +50,6 @@ const DemandeBadgeForm = ({ demandeId, onSubmit, typeDemande }) => {
   console.log("[DemandeBadgeForm] Render: loading=", loading, "error=", error, "formulaire=", formulaire);
 
   if (loading) return <p>Chargement du formulaire...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  //if (!formulaire) return <p style={{ color: 'orange' }}>Le formulaire n'est pas encore accessible. Attendez la validation de l'admin.</p>;
   if (!demandeId) return <p>Erreur: ID de demande manquant</p>;
 
   const handleChange = e => {

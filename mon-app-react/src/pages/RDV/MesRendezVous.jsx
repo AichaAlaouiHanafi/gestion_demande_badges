@@ -11,24 +11,55 @@ const MesRendezVous = () => {
   const [modifRdvId, setModifRdvId] = useState(null);
   const [nouvelleDate, setNouvelleDate] = useState('');
   const [nouvelleHeure, setNouvelleHeure] = useState('');
+  const [delaiRappel, setDelaiRappel] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchRdvs = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:8081/api/rdvs/utilisateur/${userId}`, {
+        // Récupérer les RDV de badge
+        const rdvResponse = await fetch(`http://localhost:8081/api/rdvs/utilisateur/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error('Erreur lors du chargement des RDVs');
-        const data = await response.json();
-        setRdvs(data);
+        if (!rdvResponse.ok) throw new Error('Erreur lors du chargement des RDVs');
+        const rdvData = await rdvResponse.json();
+
+        // Récupérer les demandes de dépôt et récupération
+        const demandesResponse = await fetch(`http://localhost:8081/api/demandes/mes-demandes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!demandesResponse.ok) throw new Error('Erreur lors du chargement des demandes');
+        const demandesData = await demandesResponse.json();
+
+        // Afficher toutes les demandes de dépôt/récupération ayant une date souhaitée
+        const demandesDepotRecup = demandesData.filter(d => 
+          (d.type === 'DEPOT' || d.type === 'RECUPERATION') &&
+          d.formulaire && JSON.parse(d.formulaire).dateSouhaitee
+        );
+
+        // Convertir les demandes en format RDV
+        const rdvsDepotRecup = demandesDepotRecup.map(d => {
+          const formulaire = JSON.parse(d.formulaire);
+          return {
+            id: d.id,
+            dateProposee: `${formulaire.dateSouhaitee}T${formulaire.creneau ? (formulaire.creneau === '9h-12h' ? '09:00' : '14:00') : (formulaire.heureSouhaitee || '09:00')}`,
+            confirme: true,
+            type: d.type,
+            formulaire: formulaire,
+            delaiRappel: d.delaiRappel || null,
+            statut: d.statut
+          };
+        });
+
+        // Combiner les RDV de badge avec les RDV de dépôt/récupération
+        setRdvs([...rdvData, ...rdvsDepotRecup]);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchRdvs();
+    fetchData();
   }, [userId, token]);
 
   const handleConfirmer = async (rdvId) => {
@@ -87,6 +118,35 @@ const MesRendezVous = () => {
     }
   };
 
+  const handleConfigurerRappel = async (rdvId, delai) => {
+    try {
+      // Chercher le rdv dans la liste pour savoir si c'est un dépôt/récup ou badge
+      const rdv = rdvs.find(r => r.id === rdvId);
+      let url = '';
+      if (rdv && (rdv.type === 'DEPOT' || rdv.type === 'RECUPERATION')) {
+        url = `http://localhost:8081/api/demandes/${rdvId}/rappel`;
+      } else {
+        url = `http://localhost:8081/api/rdvs/${rdvId}/rappel`;
+      }
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ delaiRappel: delai })
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de la configuration du rappel');
+      setRdvs(rdvs => rdvs.map(r => 
+        r.id === rdvId ? { ...r, delaiRappel: delai } : r
+      ));
+      alert('Configuration du rappel enregistrée !');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div>Chargement des rendez-vous...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
@@ -100,14 +160,21 @@ const MesRendezVous = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <th style={styles.th}>Type</th>
                 <th style={styles.th}>Date proposée</th>
                 <th style={styles.th}>Statut</th>
+                <th style={styles.th}>Rappel</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {rdvs.map(rdv => (
                 <tr key={rdv.id} style={styles.tr}>
+                  <td style={styles.td}>
+                    {rdv.type === 'DEPOT' ? 'Dépôt de badge' :
+                     rdv.type === 'RECUPERATION' ? 'Récupération de badge' :
+                     'Badge'}
+                  </td>
                   <td style={styles.td}>
                     {rdv.dateProposee ? new Date(rdv.dateProposee).toLocaleString('fr-FR', {
                       dateStyle: 'full',
@@ -119,11 +186,35 @@ const MesRendezVous = () => {
                       ? "Confirmé"
                       : rdv.modifie
                         ? "Modifié"
-                        : "Proposé"
+                        : rdv.statut === 'RDV_CONFIRME' ? 'Confirmé' : rdv.statut || "Proposé"
                     }
                   </td>
                   <td style={styles.td}>
-                    {!rdv.confirme && (
+                    {rdv.confirme && rdv.delaiRappel ? (
+                      <span>
+                        {rdv.delaiRappel === 2 && '2 heures avant'}
+                        {rdv.delaiRappel === 24 && '1 jour avant'}
+                        {rdv.delaiRappel === 48 && '2 jours avant'}
+                      </span>
+                    ) : rdv.confirme && (
+                      <select
+                        value={rdv.delaiRappel || ''}
+                        onChange={(e) => handleConfigurerRappel(rdv.id, parseInt(e.target.value))}
+                        style={{
+                          padding: '5px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        <option value="">Choisir un délai</option>
+                        <option value="2">2 heures avant</option>
+                        <option value="24">1 jour avant</option>
+                        <option value="48">2 jours avant</option>
+                      </select>
+                    )}
+                  </td>
+                  <td style={styles.td}>
+                    {!rdv.confirme && !rdv.type && (
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button 
                           onClick={() => handleConfirmer(rdv.id)}
@@ -139,7 +230,7 @@ const MesRendezVous = () => {
                         </button>
                       </div>
                     )}
-                    {modifRdvId === rdv.id && (
+                    {modifRdvId === rdv.id && !rdv.type && (
                       <form onSubmit={handleSubmitModification} style={styles.form}>
                         <div style={styles.formGroup}>
                           <input

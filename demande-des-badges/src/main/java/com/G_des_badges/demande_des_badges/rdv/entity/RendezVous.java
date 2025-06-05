@@ -20,4 +20,7 @@ public class RendezVous {
     private String nomEmploye;
     private String prenomEmploye;
     private String emailEmploye;
+
+    // Délai de rappel choisi par l'employé (en heures)
+    private Integer delaiRappel;
 }

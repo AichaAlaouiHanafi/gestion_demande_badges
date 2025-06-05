@@ -15,7 +15,13 @@ public class NotificationController {
     // Toutes les notifications (admin/superadmin)
     @GetMapping
     public List<Notification> getAllNotifications() {
-        return notificationRepository.findAllByOrderByDateDesc();
+        System.out.println("[DEBUG] getAllNotifications appelée !");
+        List<Notification> notifs = notificationRepository.findAllByOrderByDateDesc();
+        System.out.println("[NOTIF] getAllNotifications - nb=" + notifs.size());
+        for (Notification n : notifs) {
+            System.out.println("[NOTIF] id=" + n.getId() + " type=" + n.getType() + " userId=" + n.getUserId() + " msg=" + n.getMessage());
+        }
+        return notifs;
     }
 
     // Notifications d'un utilisateur (employé)

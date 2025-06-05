@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import com.G_des_badges.demande_des_badges.model.Role;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
@@ -85,11 +86,13 @@ public class UtilisateurController {
         Utilisateur currentUser = utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        // Vérifier si l'utilisateur est SUPERADMIN ou s'il modifie son propre profil
+        // Vérifier si l'utilisateur est SUPERADMIN ou ADMIN ou s'il modifie son propre profil
         boolean isSuperAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_SUPERADMIN"));
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         
-        if (!isSuperAdmin && !currentUser.getId().equals(id)) {
+        if (!(isSuperAdmin || isAdmin) && !currentUser.getId().equals(id)) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce profil");
         }
 
@@ -100,8 +103,46 @@ public class UtilisateurController {
         user.setNom(dto.getNom());
         user.setPrenom(dto.getPrenom());
         user.setPosition(dto.getPosition());
-        // Optionnel : gérer le département si besoin
+        // Mettre à jour le département si besoin
+        if (dto.getNomDepartement() != null && !dto.getNomDepartement().equals("Aucun")) {
+            var departement = utilisateurRepository.findAll().stream()
+                .filter(u -> u.getDepartement() != null && u.getDepartement().getNomDepartement().equals(dto.getNomDepartement()))
+                .map(Utilisateur::getDepartement)
+                .findFirst().orElse(null);
+            user.setDepartement(departement);
+        }
         utilisateurRepository.save(user);
         return mapToDTO(user);
+    }
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public ResponseEntity<?> supprimerUtilisateur(@PathVariable Long id) {
+        utilisateurRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN')")
+    public ResponseEntity<?> creerUtilisateur(@RequestBody UtilisateurResponseDTO dto) {
+        Utilisateur user = new Utilisateur();
+        user.setNom(dto.getNom());
+        user.setPrenom(dto.getPrenom());
+        user.setPosition(dto.getPosition());
+        user.setEmail(dto.getEmail());
+        user.setRole(dto.getRole() != null ? dto.getRole() : com.G_des_badges.demande_des_badges.model.Role.EMPLOYEE);
+        user.setEnabled(true);
+        // Gérer le département si fourni
+        if (dto.getNomDepartement() != null && !dto.getNomDepartement().equals("Aucun")) {
+            // Recherche du département par nom
+            // (à adapter si tu veux utiliser l'id)
+            var departement = utilisateurRepository.findAll().stream()
+                .filter(u -> u.getDepartement() != null && u.getDepartement().getNomDepartement().equals(dto.getNomDepartement()))
+                .map(Utilisateur::getDepartement)
+                .findFirst().orElse(null);
+            user.setDepartement(departement);
+        }
+        utilisateurRepository.save(user);
+        return ResponseEntity.ok(mapToDTO(user));
     }
 }

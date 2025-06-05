@@ -14,4 +14,5 @@ public class RdvResponseDTO {
     private String nomEmploye;
     private String prenomEmploye;
     private String emailEmploye;
+    private Integer delaiRappel;
 }

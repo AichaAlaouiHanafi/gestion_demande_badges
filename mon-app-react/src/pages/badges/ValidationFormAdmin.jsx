@@ -223,7 +223,8 @@ const ValidationFormAdmin = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Utilisateur</th>
+              <th>Nom</th>
+              <th>Prénom</th>
               <th>Type</th>
               <th>Formulaire</th>
               <th>Statut</th>
@@ -233,7 +234,8 @@ const ValidationFormAdmin = () => {
             {demandes.map(demande => (
               <tr key={demande.id}>
                 <td>{demande.id}</td>
-                <td>{demande.utilisateurId}</td>
+                <td>{demande.nomUtilisateur || ''}</td>
+                <td>{demande.prenomUtilisateur || ''}</td>
                 <td>{demande.type}</td>
                 <td>
                   {demande.formulaire ? (

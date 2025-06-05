@@ -310,6 +310,21 @@ export const authService = {
       
       throw error;
     }
+  },
+
+  createUtilisateur: async (userData) => {
+    const token = localStorage.getItem('token');
+    try {
+      return await axios.post('/api/utilisateurs', userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de l\'utilisateur:', error);
+      throw error;
+    }
   }
 };
 

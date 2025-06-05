@@ -12,6 +12,7 @@ import com.G_des_badges.demande_des_badges.model.Role;
 import com.G_des_badges.demande_des_badges.model.StatutDemande;
 import com.G_des_badges.demande_des_badges.notification.entity.Notification;
 import com.G_des_badges.demande_des_badges.notification.repository.NotificationRepository;
+import com.G_des_badges.demande_des_badges.demande.service.DemandeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -39,6 +40,9 @@ public class RdvServiceImpl implements RdvService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Autowired
+    private DemandeService demandeService;
+
     @Override
     public RdvResponseDTO proposerRdv(ProposerRdvDTO dto) {
         RendezVous rdv = new RendezVous();
@@ -46,7 +50,10 @@ public class RdvServiceImpl implements RdvService {
         rdv.setDateProposee(dto.getDateProposee());
         rdv.setModifie(false);
         rdv.setConfirme(false);
-        return mapToDto(rdvRepository.save(rdv));
+        RdvResponseDTO response = mapToDto(rdvRepository.save(rdv));
+        // Mettre à jour le statut de la demande à RDV_PROPOSE
+        demandeService.setStatutRdvPropose(dto.getDemandeId());
+        return response;
     }
 
     @Override
@@ -87,7 +94,7 @@ public class RdvServiceImpl implements RdvService {
         var superAdmins = utilisateurRepository.findByRole(Role.SUPERADMIN);
         for (Utilisateur superAdmin : superAdmins) {
             Notification notif = new Notification(
-                "RDV_MODIFIE",
+                "MODIFICATION_RDV",
                 "Nouvelle demande de modification de RDV pour la demande #" + demande.getId() + " (employé : " + employe.getNom() + " " + employe.getPrenom() + ")",
                 superAdmin.getId()
             );
@@ -102,7 +109,10 @@ public class RdvServiceImpl implements RdvService {
         RendezVous rdv = rdvRepository.findById(rdvId)
                 .orElseThrow(() -> new RuntimeException("RDV introuvable"));
         rdv.setConfirme(true);
-        return mapToDto(rdvRepository.save(rdv));
+        RdvResponseDTO response = mapToDto(rdvRepository.save(rdv));
+        // Mettre à jour le statut de la demande à RDV_CONFIRME
+        demandeService.setStatutRdvConfirme(rdv.getDemandeId());
+        return response;
     }
 
     @Override
@@ -182,6 +192,7 @@ public class RdvServiceImpl implements RdvService {
                 dto.setEmailEmploye(employe.getEmail());
             }
         }
+        dto.setDelaiRappel(rdv.getDelaiRappel());
         return dto;
     }
 }

@@ -1,10 +1,9 @@
-
-
 // En option - modifiez votre AppLayout.jsx pour s'assurer qu'il utilise le rôle défini par l'URL
 
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import './AppLayoutStyle.css'; // Assurez-vous que ce fichier existe
+import ProfileMenu from '../../components/layout/ProfileMenu';
 
 const AppLayout = () => {
   const location = useLocation();
@@ -46,7 +45,7 @@ const AppLayout = () => {
       { path: '/superadmin/rdvs', label: 'rendez vous' },
       { path: '/superadmin/notifications', label: 'notification' },
       { path: '/superadmin/utilisateurs', label: 'utilisateur' },
-      { path: '/superadmin/roles', label: 'roles' },
+      
       { path: '/superadmin/departements', label: 'departement' },
       { path: '/superadmin/profile', label: 'mon profil' }
     ]
@@ -71,17 +70,29 @@ const AppLayout = () => {
         </nav>
       </aside>
       
-      <div className="main-content">
-        <header className="header">
-          <span className="title">Bienvenue, {role}</span>
-          <div className="icons">
-            <i className="fa fa-bell"></i>
-            <i className="fa fa-user-tie"></i>
-          </div>
-        </header>
-        <div className="page-content">
-          <Outlet />
+      <header
+        className="header"
+        style={{
+          position: 'fixed',
+          top: 10,
+          right: 5,
+          width: 'auto',
+          background: 'transparent',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: '12px 32px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+         
+          <ProfileMenu />
         </div>
+      </header>
+      <div className="page-content" style={{ marginTop: 60 }}>
+        
+        <Outlet />
       </div>
     </div>
   );
