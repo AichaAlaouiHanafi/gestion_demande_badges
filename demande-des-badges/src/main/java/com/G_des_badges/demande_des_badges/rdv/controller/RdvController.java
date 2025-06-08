@@ -63,20 +63,16 @@ public class RdvController {
     ) {
         try {
             Integer delaiRappel = body.get("delaiRappel");
-            if (delaiRappel == null || (delaiRappel != 2 && delaiRappel != 24 && delaiRappel != 48)) {
-                return ResponseEntity.badRequest().body("Délai de rappel invalide. Valeurs autorisées : 2, 24, 48 heures");
+            if (delaiRappel == null || delaiRappel < 1 || delaiRappel > 72) {
+                return ResponseEntity.badRequest().body("Délai de rappel invalide. Valeurs autorisées : 1 à 72 heures");
             }
-            
             RendezVous rdv = rdvRepository.findById(rdvId)
                 .orElseThrow(() -> new RuntimeException("RDV introuvable"));
-            
             if (!rdv.isConfirme()) {
                 return ResponseEntity.badRequest().body("Le RDV doit être confirmé pour configurer un rappel");
             }
-            
             rdv.setDelaiRappel(delaiRappel);
             rdvRepository.save(rdv);
-            
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

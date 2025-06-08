@@ -13,6 +13,8 @@ import com.G_des_badges.demande_des_badges.model.Role;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
+import com.G_des_badges.demande_des_badges.departement.repository.DepartementRepository;
+import com.G_des_badges.demande_des_badges.departement.entity.Departement;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
@@ -21,7 +23,8 @@ public class UtilisateurController {
     @Autowired
     private UtilisateurRepository utilisateurRepository;
 
-
+    @Autowired
+    private DepartementRepository departementRepository;
 
     private UtilisateurResponseDTO mapToDTO(Utilisateur user) {
         UtilisateurResponseDTO dto = new UtilisateurResponseDTO();
@@ -34,13 +37,14 @@ public class UtilisateurController {
 
         if (user.getDepartement() != null) {
             dto.setNomDepartement(user.getDepartement().getNomDepartement());
+            dto.setDepartementId(user.getDepartement().getDepartement_id());
         } else {
             dto.setNomDepartement("Aucun");
+            dto.setDepartementId(null);
         }
 
         return dto;
     }
-
 
     /**
      * 🔍 Affiche tous les utilisateurs (SUPERADMIN uniquement)
@@ -103,13 +107,14 @@ public class UtilisateurController {
         user.setNom(dto.getNom());
         user.setPrenom(dto.getPrenom());
         user.setPosition(dto.getPosition());
-        // Mettre à jour le département si besoin
+        // Correction : mise à jour du département via le repository
         if (dto.getNomDepartement() != null && !dto.getNomDepartement().equals("Aucun")) {
-            var departement = utilisateurRepository.findAll().stream()
-                .filter(u -> u.getDepartement() != null && u.getDepartement().getNomDepartement().equals(dto.getNomDepartement()))
-                .map(Utilisateur::getDepartement)
+            Departement departement = departementRepository.findAll().stream()
+                .filter(d -> d.getNomDepartement().equals(dto.getNomDepartement()))
                 .findFirst().orElse(null);
             user.setDepartement(departement);
+        } else {
+            user.setDepartement(null);
         }
         utilisateurRepository.save(user);
         return mapToDTO(user);

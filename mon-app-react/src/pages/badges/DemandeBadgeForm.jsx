@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
+import logoONDA from '../../assets/ONDA.png';
+import logoRAM from '../../assets/RAM.png';
 
 const DemandeBadgeForm = ({ demandeId, onSubmit, typeDemande }) => {
   console.log("[DemandeBadgeForm] Monté avec demandeId:", demandeId, "typeDemande:", typeDemande);
@@ -78,43 +80,85 @@ const DemandeBadgeForm = ({ demandeId, onSubmit, typeDemande }) => {
   };
 
   const handleDownloadPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    // Logos
+    const imgWidth = 40;
+    const imgHeight = 24;
+    doc.addImage(logoONDA, 'PNG', 15, 10, imgWidth, imgHeight);
+    doc.addImage(logoRAM, 'PNG', 155, 10, imgWidth, imgHeight);
+    // Titre principal
+    doc.setFontSize(18);
+    doc.setTextColor(128,0,0);
+    doc.text('PERMIS D\'ACCES TEMPORAIRE', 105, 30, { align: 'center' });
+    doc.setFontSize(14);
+    doc.setTextColor(80, 0, 0);
+    doc.text('Zone Réglementée', 105, 40, { align: 'center' });
+    // Section A
+    let y = 50;
+    doc.setFillColor(36, 61, 97);
+    doc.rect(15, y, 180, 10, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(13);
+    doc.text('A   LES INFORMATIONS PERSONNELLES', 20, y + 7);
+    y += 14;
+    // Tableau infos personnelles
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(11);
+    const infosPerso = [
+      ['Nom', form.nom, 'Prénom', form.prenom],
+      ['fil de', form.filiation, 'Ben', form.ben],
+      ['et de', form.etDe || '', 'Bent', form.bent || ''],
+      ['lieu de naissance', form.lieuNaissance || '', 'Date de naissance', form.dateNaissance || ''],
+      ['Nationalité', form.nationalite || '', 'Ville', form.ville || ''],
+      ['situation familiale', form.situationFamiliale || '', "Nombre d'enfant", form.nbEnfants || ''],
+      ['N C.I.N', form.cln || '', 'Date d\'expiration', form.dateExpiration || ''],
+      ['N Passport', form.passport || '', 'Date de délivrance', form.dateDelivrance || ''],
+      ['Adresse personnelle', form.adresse || '', '', '']
+    ];
+    // Largeur des colonnes
+    const colW = [38, 38, 38, 38];
+    // En-tête tableau
+    infosPerso.forEach(row => {
+      let x = 15;
+      row.forEach((cell, idx) => {
+        doc.rect(x, y, colW[idx], 10);
+        if (cell) doc.text(String(cell), x + 2, y + 7);
+        x += colW[idx];
+      });
+      y += 10;
+    });
+    y += 6;
+    // Section B
+    doc.setFillColor(36, 61, 97);
+    doc.rect(15, y, 180, 10, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(13);
+    doc.text('B   INFORMATIONS PROFESSIONNELLES ET ACCÈS ORGANISME EMPLOYEUR', 20, y + 7);
+    y += 14;
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(11);
+    const infosPro = [
+      ['Organisme employeur', form.organisme, 'Fonction', form.fonction],
+      ['Date de recrutement', form.dateRecrutement, 'Avez-vous déjà un laissez-passer', form.dejaLaissezPasser],
+      ['Type', form.typeLaissezPasser, 'Numéro', form.numLaissezPasser],
+      ["Objet de l'autorisation d'accès", form.objet, '', ''],
+      ['Zones de sûreté proposées', form.zonesSurete, '', ''],
+      ['Mode de règlement', form.modeReglement, '', '']
+    ];
+    infosPro.forEach(row => {
+      let x = 15;
+      row.forEach((cell, idx) => {
+        doc.rect(x, y, colW[idx], 10);
+        if (cell) doc.text(String(cell), x + 2, y + 7);
+        x += colW[idx];
+      });
+      y += 10;
+    });
+    // Signature
+    y += 18;
     doc.setFontSize(12);
-    doc.text('PERMIS D\'ACCES TEMPORAIRE - Zone Réglementée', 10, 10);
-    doc.text(`Nom : ${form.nom}`, 10, 20);
-    doc.text(`Prénom : ${form.prenom}`, 10, 30);
-    doc.text(`Nationalité : ${form.nationalite}`, 10, 40);
-    doc.text(`Fils (le) de : ${form.filiation}`, 10, 50);
-    doc.text(`Situation familiale : ${form.situationFamiliale}`, 10, 60);
-    doc.text(`Nombre d'enfants : ${form.nbEnfants}`, 10, 70);
-    doc.text(`Date et lieu de naissance : ${form.dateNaissance}`, 10, 80);
-    doc.text(`N° C.L.N : ${form.cln}`, 10, 90);
-    doc.text(`Date d'expiration : ${form.dateExpiration}`, 10, 100);
-    doc.text(`N° Passeport : ${form.passport}`, 10, 110);
-    doc.text(`Date de délivrance : ${form.dateDelivrance}`, 10, 120);
-    doc.text(`Adresse personnelle : ${form.adresse}`, 10, 130);
-    doc.text(`Ville : ${form.ville}`, 10, 140);
-    doc.text(`Organisme employeur : ${form.organisme}`, 10, 150);
-    doc.text(`Fonction : ${form.fonction}`, 10, 160);
-    doc.text(`Date de recrutement : ${form.dateRecrutement}`, 10, 170);
-    doc.text(`Déjà eu un laissez-passer : ${form.dejaLaissezPasser}`, 10, 180);
-    doc.text(`Type Laissez-Passer : ${form.typeLaissezPasser}`, 10, 190);
-    doc.text(`N° Laissez-Passer : ${form.numLaissezPasser}`, 10, 200);
-    doc.text(`Objet de l'autorisation d'accès : ${form.objet}`, 10, 210);
-    doc.text(`Zones de sûreté proposées : ${form.zonesSurete}`, 10, 220);
-    doc.text(`Portes d'accès proposées : ${form.portesAcces}`, 10, 230);
-    doc.text(`Mode de règlement : ${form.modeReglement}`, 10, 240);
-    doc.text(`Date employeur : ${form.dateEmployeur}`, 10, 250);
-    doc.text(`Date sûreté nationale : ${form.dateSurete}`, 10, 260);
-    doc.text(`Date gendarmerie : ${form.dateGendarmerie}`, 10, 270);
-    doc.text(`Date directeur : ${form.dateDirecteur}`, 10, 280);
-    doc.text(`N° dossier : ${form.numDossier}`, 10, 290);
-    doc.text(`Secteurs : ${form.secteurs}`, 10, 300);
-    doc.text(`Portes : ${form.portes}`, 10, 310);
-    doc.text(`Fait le : ${form.dateFait}`, 10, 320);
-    doc.text(`À : ${form.lieu}`, 10, 330);
-    doc.text(`Signature du concerné : ${form.signatureConcerne}`, 10, 340);
-    doc.save('formulaire_badge.pdf');
+    doc.text('Signature', 160, y);
+    doc.save('formulaire_badge_officiel.pdf');
   };
 
   return (

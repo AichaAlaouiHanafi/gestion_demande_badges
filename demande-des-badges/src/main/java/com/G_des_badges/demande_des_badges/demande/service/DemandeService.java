@@ -24,4 +24,6 @@ public interface DemandeService {
     void setStatutDepotDemande(Long demandeId);
     void setStatutRecuperationDemande(Long demandeId);
     void configurerRappelDemande(Long demandeId, Integer delaiRappel);
+    // Nouvelle méthode pour clôturer une demande
+    DemandeResponseDTO cloturerDemande(Long demandeId);
 }

@@ -2,14 +2,16 @@ package com.G_des_badges.demande_des_badges.utilisateur.entity;
 
 import com.G_des_badges.demande_des_badges.departement.entity.Departement;
 import com.G_des_badges.demande_des_badges.model.Role;
+import com.G_des_badges.demande_des_badges.demande.entity.Demande;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+//import com.G_des_badges.demande_des_badges.demande.entity.Demande;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "utilisateurs")
@@ -52,4 +54,7 @@ public class Utilisateur {
 
     @Column(name = "token_expiration")
     private LocalDateTime tokenExpiration;
+
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Demande> demandes;
 }

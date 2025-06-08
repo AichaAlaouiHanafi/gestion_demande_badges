@@ -6,6 +6,7 @@ import com.G_des_badges.demande_des_badges.rdv.dto.RdvResponseDTO;
 import com.G_des_badges.demande_des_badges.rdv.entity.RendezVous;
 import com.G_des_badges.demande_des_badges.rdv.repository.RdvRepository;
 import com.G_des_badges.demande_des_badges.demande.repository.DemandeRepository;
+import com.G_des_badges.demande_des_badges.demande.entity.Demande;
 import com.G_des_badges.demande_des_badges.utilisateur.repository.UtilisateurRepository;
 import com.G_des_badges.demande_des_badges.utilisateur.entity.Utilisateur;
 import com.G_des_badges.demande_des_badges.model.Role;
@@ -75,7 +76,7 @@ public class RdvServiceImpl implements RdvService {
         // Récupérer la demande et l'utilisateur
         var demande = demandeRepository.findById(rdv.getDemandeId())
             .orElseThrow(() -> new RuntimeException("Demande introuvable"));
-        Utilisateur employe = utilisateurRepository.findById(demande.getUtilisateurId())
+        Utilisateur employe = utilisateurRepository.findById(demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null)
             .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         // Envoi d'email à l'employé
@@ -110,8 +111,30 @@ public class RdvServiceImpl implements RdvService {
                 .orElseThrow(() -> new RuntimeException("RDV introuvable"));
         rdv.setConfirme(true);
         RdvResponseDTO response = mapToDto(rdvRepository.save(rdv));
-        // Mettre à jour le statut de la demande à RDV_CONFIRME
-        demandeService.setStatutRdvConfirme(rdv.getDemandeId());
+        // Mettre à jour le statut de la demande selon le type
+        var demande = demandeRepository.findById(rdv.getDemandeId())
+            .orElseThrow(() -> new RuntimeException("Demande introuvable"));
+        if (demande.getType() != null) {
+            switch (demande.getType()) {
+                case DEPOT:
+                    demande.setStatut(StatutDemande.DEPOT_DEMANDE);
+                    break;
+                case RECUPERATION:
+                    demande.setStatut(StatutDemande.RECUPERATION_DEMANDE);
+                    break;
+                case BADGE:
+                    // Si la demande est déjà en RECUPERATION_CONFIRME, on passe à BADGE_RECUPERE
+                    if (demande.getStatut() == StatutDemande.RECUPERATION_CONFIRME) {
+                        demande.setStatut(StatutDemande.BADGE_RECUPERE);
+                    } else {
+                        demande.setStatut(StatutDemande.RECUPERATION_CONFIRME);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            demandeRepository.save(demande);
+        }
         return response;
     }
 
@@ -123,7 +146,7 @@ public class RdvServiceImpl implements RdvService {
         // Récupérer la demande et l'utilisateur pour la notification
         var demande = demandeRepository.findById(rdv.getDemandeId())
             .orElseThrow(() -> new RuntimeException("Demande introuvable"));
-        Utilisateur employe = utilisateurRepository.findById(demande.getUtilisateurId())
+        Utilisateur employe = utilisateurRepository.findById(demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null)
             .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         // Envoi d'email à l'employé
@@ -166,11 +189,10 @@ public class RdvServiceImpl implements RdvService {
     @Override
     public List<RdvResponseDTO> getRdvsByUtilisateur(Long utilisateurId) {
         // Récupérer toutes les demandes de l'utilisateur
-        List<Long> demandeIds = demandeRepository.findByUtilisateurId(utilisateurId)
-            .stream().map(d -> d.getId()).collect(Collectors.toList());
+        List<Demande> demandes = demandeRepository.findByUtilisateur_Id(utilisateurId);
         // Récupérer tous les RDV liés à ces demandes
         return rdvRepository.findAll().stream()
-            .filter(rdv -> demandeIds.contains(rdv.getDemandeId()))
+            .filter(rdv -> demandes.stream().anyMatch(d -> d.getId().equals(rdv.getDemandeId())))
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -185,7 +207,7 @@ public class RdvServiceImpl implements RdvService {
         // Ajout des infos employé
         var demande = demandeRepository.findById(rdv.getDemandeId()).orElse(null);
         if (demande != null) {
-            var employe = utilisateurRepository.findById(demande.getUtilisateurId()).orElse(null);
+            var employe = demande.getUtilisateur();
             if (employe != null) {
                 dto.setNomEmploye(employe.getNom());
                 dto.setPrenomEmploye(employe.getPrenom());

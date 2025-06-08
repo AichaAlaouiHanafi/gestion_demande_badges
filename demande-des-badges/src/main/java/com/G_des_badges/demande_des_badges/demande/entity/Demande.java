@@ -5,6 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import com.G_des_badges.demande_des_badges.model.StatutDemande;
 import com.G_des_badges.demande_des_badges.model.TypeDemande;
+import com.G_des_badges.demande_des_badges.utilisateur.entity.Utilisateur;
 
 @Entity
 @Table(name = "demandes")
@@ -14,7 +15,7 @@ public class Demande {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long utilisateurId;
+    //private Long utilisateurId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut")
@@ -33,4 +34,8 @@ public class Demande {
 
     // Délai de rappel choisi par l'employé (en heures)
     private Integer delaiRappel;
+
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private Utilisateur utilisateur;
 }

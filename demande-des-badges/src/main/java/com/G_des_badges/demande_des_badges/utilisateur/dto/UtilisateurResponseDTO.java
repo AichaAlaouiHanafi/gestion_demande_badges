@@ -11,5 +11,6 @@ public class UtilisateurResponseDTO {
     private String position;
     private String email;
     private String nomDepartement;
+    private Long departementId;
     private Role role;
 }

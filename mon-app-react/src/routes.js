@@ -71,10 +71,9 @@ const AppRoutes = () => {
           <Route index element={<ProfileAdmin />} />
           <Route path="profile" element={<ProfileAdmin />} />
           <Route path="badges" element={<ValidationFormAdmin />} />
-          <Route path="demandes" element={<ValidationFormAdmin />} />
+          <Route path="demandes" element={<ListeDemandes />} />
           <Route path="rdvs" element={<div>Admin RDVs Page</div>} />
           <Route path="notifications" element={<NotificationPage />} />
-          <Route path="demandes" element={<ListeDemandes />} />
           <Route path="utilisateurs" element={<UtilisateurPage />} />
           <Route path="inscription" element={<InscriptionPage />} />
           <Route path="/admin/utilisateurs/edit/:id" element={<ModifierUtilisateur />} />

@@ -78,7 +78,7 @@ public class RappelService {
                 continue;
             }
 
-            Utilisateur user = utilisateurRepository.findById(demande.getUtilisateurId())
+            Utilisateur user = utilisateurRepository.findById(demande.getUtilisateur().getId())
                 .orElse(null);
             if (user == null) {
                 logger.warn("[RAPPEL] Utilisateur non trouvé pour demande ID={}", demande.getId());

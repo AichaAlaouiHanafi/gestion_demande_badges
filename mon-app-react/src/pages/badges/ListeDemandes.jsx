@@ -19,6 +19,8 @@ const ListeDemandes = () => {
   const [showForm, setShowForm] = useState(false);
   const [showDepotForm, setShowDepotForm] = useState(false);
   const [showRecupForm, setShowRecupForm] = useState(false);
+  const [utilisateurs, setUtilisateurs] = useState([]);
+  const [selectedDemande, setSelectedDemande] = useState(null);
 
   // Définition de fetchDemandes accessible partout
   const fetchDemandes = async () => {
@@ -49,16 +51,39 @@ const ListeDemandes = () => {
 
   useEffect(() => {
     fetchDemandes();
+    // Récupérer tous les utilisateurs pour le filtrage par département
+    const fetchUtilisateurs = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8081/api/utilisateurs', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        setUtilisateurs(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setUtilisateurs([]);
+      }
+    };
+    fetchUtilisateurs();
   }, []);
 
   const handleStart = () => setShowForm(true);
 
   if (loading) return <p>Chargement des demandes...</p>;
 
-  // Filtrage par type
-  const demandesFiltrees = filtreType
-    ? demandes.filter(d => d.type === filtreType)
-    : demandes;
+  // Récupérer le département de l'utilisateur connecté
+  const user = JSON.parse(localStorage.getItem('user'));
+  const role = user?.role || localStorage.getItem('role');
+  const departementId = user?.departement?.id;
+
+  // Filtrage par type ET par département (pour ADMIN)
+  const demandesFiltrees = demandes.filter(d => {
+    if (role === 'ADMIN' && departementId && utilisateurs.length > 0) {
+      const userDemande = utilisateurs.find(u => u.id === d.utilisateurId);
+      return (!filtreType || d.type === filtreType) && userDemande && userDemande.departementId === departementId;
+    }
+    return !filtreType || d.type === filtreType;
+  });
 
   // Chercher la demande de badge en cours
   const demandeBadgeEnCours = demandes.find(
@@ -147,66 +172,74 @@ const ListeDemandes = () => {
     }
   };
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const role = user?.role || localStorage.getItem('role');
-
   return (
-    <div style={{ display: 'flex', gap: 40 }}>
-      {/* Colonne gauche : liste des demandes */}
-      <div style={{ flex: 2 }}>
-        <h2>Liste des demandes</h2>
-        <div style={{ marginBottom: 20 }}>
-          <label>Filtrer par type : </label>
-          <select value={filtreType} onChange={e => setFiltreType(e.target.value)}>
-            {types.map(t => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        </div>
-        {demandesFiltrees.length === 0 ? (
-          <p>Aucune demande trouvée.</p>
-        ) : (
-          <table border="1" cellPadding="8">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Type</th>
-                <th>Formulaire</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {demandesFiltrees.map(demande => (
-                <tr key={demande.id}>
-                  <td>{demande.id}</td>
-                  <td>{demande.nomUtilisateur || ''}</td>
-                  <td>{demande.prenomUtilisateur || ''}</td>
-                  <td>{demande.type}</td>
-                  <td>
-                    {demande.formulaire ? (
-                      <button disabled style={{ opacity: 0.7 }}>
-                        Voir le formulaire
-                      </button>
-                    ) : (
-                      <span>En attente de soumission</span>
-                    )}
-                  </td>
-                  <td>
-                    <span>{demande.statut}</span>
-                  </td>
-                </tr>
+    <div className="main-content" style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', gap: 40 }}>
+        {/* Colonne gauche : liste des demandes */}
+        <div style={{ flex: 2 }}>
+          <h2>Liste des demandes</h2>
+          <div style={{ marginBottom: 20 }}>
+            <label>Filtrer par type : </label>
+            <select value={filtreType} onChange={e => setFiltreType(e.target.value)}>
+              {types.map(t => (
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-      {/* Colonne droite : workflow métier corrigé */}
-      <div style={{ flex: 1, background: '#fff', padding: 20, borderRadius: 8, minWidth: 350 }}>
-        <h3>Nouvelle demande</h3>
-        {role !== 'SUPERADMIN' && (
-          <>
+            </select>
+          </div>
+          {demandesFiltrees.length === 0 ? (
+            <p>Aucune demande trouvée.</p>
+          ) : (
+            <table border="1" cellPadding="8">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Prénom</th>
+                  <th>Type</th>
+                  <th>Formulaire</th>
+                  <th>Statut</th>
+                  {role !== 'ADMIN' && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {demandesFiltrees.map(demande => (
+                  <tr key={demande.id}>
+                    <td>{demande.id}</td>
+                    <td>{demande.nomUtilisateur || ''}</td>
+                    <td>{demande.prenomUtilisateur || ''}</td>
+                    <td>{demande.type}</td>
+                    <td>
+                      {demande.formulaire ? (
+                        <button onClick={() => setSelectedDemande(demande)}>
+                          Voir le formulaire
+                        </button>
+                      ) : (
+                        <span>En attente de soumission</span>
+                      )}
+                    </td>
+                    <td>
+                      <span>{demande.statut}</span>
+                    </td>
+                    {role !== 'ADMIN' && (
+                      <td>
+                        {demande.statut === 'DEMANDE_INITIALE' && (
+                          <>
+                            <button onClick={() => {/* logique d'approbation */}} style={{marginRight: 8}}>Approuver</button>
+                            <button onClick={() => {/* logique de refus */}} style={{background:'#f88', color:'#900'}}>Refuser</button>
+                          </>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        {/* Colonne droite : workflow métier corrigé */}
+        {role !== 'SUPERADMIN' && role !== 'ADMIN' && (
+          <div style={{ flex: 1, background: '#fff', padding: 20, borderRadius: 8, minWidth: 350 }}>
+            <h3>Nouvelle demande</h3>
             {typeDemande === '' && (
               <div>
                 <label>Type de demande : </label>
@@ -247,9 +280,24 @@ const ListeDemandes = () => {
                 <button onClick={() => setShowRecupForm(true)}>Faire une demande de récupération</button>
               )
             )}
-          </>
+          </div>
         )}
       </div>
+      {selectedDemande && (
+        <div className="popup-formulaire" style={{ position: 'fixed', top: 40, right: 40, background: '#fff', border: '1px solid #ccc', borderRadius: 8, padding: 24, zIndex: 1000, minWidth: 400 }}>
+          <button onClick={() => setSelectedDemande(null)} style={{ float: 'right', background: '#900', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', marginBottom: 12 }}>Fermer</button>
+          <h3>Formulaire rempli</h3>
+          {selectedDemande.type === "BADGE" && (
+            <DemandeBadgeForm data={selectedDemande} readOnly />
+          )}
+          {selectedDemande.type === "DEPOT" && (
+            <DepotBadgeForm data={selectedDemande} readOnly />
+          )}
+          {selectedDemande.type === "RECUPERATION" && (
+            <RecuperationBadgeForm data={selectedDemande} readOnly />
+          )}
+        </div>
+      )}
     </div>
   );
 };

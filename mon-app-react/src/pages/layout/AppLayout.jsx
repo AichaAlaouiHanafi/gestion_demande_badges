@@ -90,8 +90,7 @@ const AppLayout = () => {
           <ProfileMenu />
         </div>
       </header>
-      <div className="page-content" style={{ marginTop: 60 }}>
-        
+      <div className="main-content page-content" style={{ marginTop: 60 }}>
         <Outlet />
       </div>
     </div>

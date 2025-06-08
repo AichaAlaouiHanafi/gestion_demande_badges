@@ -1,38 +1,164 @@
+body {
+  background: #fdf6e3;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  color: #3a2323;
+}
+
 .App {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+/* Sidebar */
+.sidebar {
+  background: #800000;
+  color: #fff;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  padding: 32px 0 0 0;
+  width: 220px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
+.sidebar a {
+  color: #fff;
+  text-decoration: none;
+  display: block;
+  padding: 14px 32px;
+  font-size: 1.1em;
+  border-radius: 0 20px 20px 0;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.sidebar a:hover, .sidebar a.active {
+  background: #a83232;
 }
 
-.App-link {
-  color: #61dafb;
+/* Main content */
+.main-content {
+  margin-left: 240px;
+  padding: 40px 32px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Table */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(128,0,0,0.07);
+  overflow: hidden;
+}
+th, td {
+  padding: 16px 14px;
+  text-align: left;
+}
+th {
+  background: #f5e9da;
+  color: #800000;
+  font-size: 1.08em;
+  font-weight: 600;
+  border-bottom: 2px solid #e0cfc2;
+}
+tbody tr {
+  transition: background 0.2s;
+}
+tbody tr:hover {
+  background: #fbeee6;
+}
+td {
+  border-bottom: 1px solid #f0e0d0;
+}
+
+/* Boutons */
+button, .btn {
+  background: #800000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  margin: 2px 6px 2px 0;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(128,0,0,0.07);
+}
+button:hover, .btn:hover {
+  background: #a83232;
+}
+button.secondary, .btn.secondary {
+  background: #f5e9da;
+  color: #800000;
+  border: 1px solid #e0cfc2;
+}
+button.secondary:hover, .btn.secondary:hover {
+  background: #fbeee6;
+}
+
+/* Formulaires */
+input, select, textarea {
+  border: 1px solid #e0cfc2;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 1em;
+  margin-bottom: 12px;
+  background: #fff;
+  transition: border 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border: 1.5px solid #800000;
+  outline: none;
+}
+label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+  color: #800000;
+}
+
+/* Alertes */
+.alert {
+  padding: 14px 20px;
+  border-radius: 6px;
+  margin: 18px 0;
+  font-size: 1.05em;
+}
+.alert-success {
+  background: #e6f9e6;
+  color: #217a21;
+  border: 1px solid #b6e6b6;
+}
+.alert-error {
+  background: #ffeaea;
+  color: #a80000;
+  border: 1px solid #f5bcbc;
+}
+.alert-info {
+  background: #eaf4ff;
+  color: #1a4a7a;
+  border: 1px solid #bcdcf5;
+}
+
+/* Titres */
+h1, h2, h3 {
+  color: #800000;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 100px;
+    padding: 16px 0 0 0;
   }
-  to {
-    transform: rotate(360deg);
+  .main-content {
+    margin-left: 110px;
+    padding: 24px 8px;
+  }
+  th, td {
+    padding: 10px 6px;
   }
 }

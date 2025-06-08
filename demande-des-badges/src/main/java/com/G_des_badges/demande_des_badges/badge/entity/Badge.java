@@ -2,6 +2,7 @@ package com.G_des_badges.demande_des_badges.badge.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.G_des_badges.demande_des_badges.utilisateur.entity.Utilisateur;
 
 @Entity
 @Table(name = "badges")
@@ -15,5 +16,7 @@ public class Badge {
 
     private boolean actif;
 
-    private Long utilisateurId; // Lien vers l'utilisateur concerné
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private Utilisateur utilisateur;
 }

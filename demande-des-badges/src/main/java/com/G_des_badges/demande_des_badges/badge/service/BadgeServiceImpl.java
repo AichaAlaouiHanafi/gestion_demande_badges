@@ -4,6 +4,8 @@ import com.G_des_badges.demande_des_badges.badge.dto.BadgeRequestDTO;
 import com.G_des_badges.demande_des_badges.badge.dto.BadgeResponseDTO;
 import com.G_des_badges.demande_des_badges.badge.entity.Badge;
 import com.G_des_badges.demande_des_badges.badge.repository.BadgeRepository;
+import com.G_des_badges.demande_des_badges.utilisateur.entity.Utilisateur;
+import com.G_des_badges.demande_des_badges.utilisateur.repository.UtilisateurRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +18,15 @@ public class BadgeServiceImpl implements BadgeService {
     @Autowired
     private BadgeRepository badgeRepository;
 
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
     @Override
     public BadgeResponseDTO createBadge(BadgeRequestDTO request) {
         Badge badge = new Badge();
         badge.setNumero(request.getNumero());
-        badge.setUtilisateurId(request.getUtilisateurId());
+        Utilisateur utilisateur = utilisateurRepository.findById(request.getUtilisateurId()).orElse(null);
+        badge.setUtilisateur(utilisateur);
         badge.setActif(true); // actif par défaut
 
         Badge saved = badgeRepository.save(badge);
@@ -52,7 +58,7 @@ public class BadgeServiceImpl implements BadgeService {
         dto.setId(badge.getId());
         dto.setNumero(badge.getNumero());
         dto.setActif(badge.isActif());
-        dto.setUtilisateurId(badge.getUtilisateurId());
+        dto.setUtilisateurId(badge.getUtilisateur() != null ? badge.getUtilisateur().getId() : null);
         return dto;
     }
 }

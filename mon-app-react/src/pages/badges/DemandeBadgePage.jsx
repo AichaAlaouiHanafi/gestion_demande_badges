@@ -3,6 +3,7 @@ import axios from 'axios';
 import DemandeBadgeForm from './DemandeBadgeForm';
 import DepotBadgeForm from './DepotBadgeForm';
 import RecuperationBadgeForm from './RecuperationBadgeForm';
+import DemandeBadgeFormWizard from './DemandeBadgeFormWizard';
 //import ListeDemandes from './ListeDemandes';
 const types = [
   { value: 'BADGE', label: 'Demande de badge' },
@@ -22,6 +23,7 @@ const DemandeBadgePage = () => {
   const [statut, setStatut] = useState(null);
   const user = JSON.parse(localStorage.getItem('user'));
   const role = user?.role || localStorage.getItem('role');
+  const [demandes, setDemandes] = useState([]);
 
   useEffect(() => {
     const fetchDemandeEnCours = async () => {
@@ -31,6 +33,7 @@ const DemandeBadgePage = () => {
         const response = await axios.get('http://localhost:8081/api/demandes/mes-demandes', {
           headers: { Authorization: `Bearer ${token}` }
         });
+        setDemandes(response.data);
         console.log("Réponse reçue :", response.data);
         // Priorité : VALIDATION_ADMIN > DEMANDE_INITIALE > REFUSEE pour le type sélectionné
         let demandeEnCours = response.data.find(d => d.type === typeDemande && d.statut === 'VALIDATION_ADMIN');
@@ -44,8 +47,8 @@ const DemandeBadgePage = () => {
           setDemandeId(demandeEnCours.id);
           setDemandeType(demandeEnCours.type);
           setStatut(demandeEnCours.statut);
-          // Afficher le formulaire dès qu'une demande existe
-          setShowForm(true);
+          // Correction : on affiche d'abord l'encadré d'information, pas le formulaire directement
+          setShowForm(false);
         }
       } catch (err) {
         setError("Erreur lors du chargement de vos demandes");
@@ -59,6 +62,14 @@ const DemandeBadgePage = () => {
   }, [typeDemande]);
 
   const handleNouvelleDemande = async () => {
+    // Vérification côté frontend
+    const enCours = demandes.find(d => d.type === typeDemande &&
+      !['REFUSEE','BADGE_RECUPERE','RECUPERATION_CONFIRME','DEPOT_DEMANDE','RECUPERATION_DEMANDE'].includes(d.statut)
+    );
+    if (enCours) {
+      setError(`Vous avez déjà une demande de ${typeDemande.toLowerCase()} en cours.`);
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
@@ -70,13 +81,10 @@ const DemandeBadgePage = () => {
       });
       setDemandeId(response.data.demande.id);
       setDemandeType(typeDemande);
-      // On ne montre pas le formulaire immédiatement
-      setShowForm(true);
+      setShowForm(false);
       setError(null);
-      // Afficher un message de confirmation
-      //setMessage("Votre demande a été transmise à l'administrateur. Vous recevrez une notification une fois la demande validée.");
     } catch (err) {
-      setError("Erreur lors de la création de la demande");
+      setError(err.response?.data || "Erreur lors de la création de la demande");
       console.error("Erreur handleNouvelleDemande:", err);
     }
   };
@@ -125,17 +133,32 @@ const DemandeBadgePage = () => {
   // Si une demande de badge existe mais n'est pas encore validée
   if (demandeId && demandeType === 'BADGE' && !showForm) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px' }}>
-        <h3>Demande en cours de traitement</h3>
-        <p>Votre demande de badge est en attente de validation par l'administrateur.</p>
-        <p>Vous recevrez une notification une fois la demande validée.</p>
+      <div style={{ padding: 24 }}>
+        <h3>📝 Remplir le formulaire</h3>
+        <div style={{ background: '#ddd', padding: 20, borderRadius: 8, margin: '20px 0', maxWidth: 600 }}>
+          <b>Les documents ci-dessous sont requis pour le traitement de votre demande.<br/>Merci de les fournir sous format numérique (scannés) :</b>
+          <br/><br/>
+          <b>Pièce d'identité :</b><br/>
+          Pour les nationaux :<br/>
+          → Photocopie lisible de la Carte Nationale d'Identité (CIN) recto-verso (avec date d'expiration visible).<br/>
+          <br/>
+          Pour les étrangers :<br/>
+          → Photocopie du passeport valide + titre de séjour ou carte d'immatriculation consulaire.
+        </div>
+        <p>Clicke ici pour remplir le formulaire :</p>
+        <button
+          style={{ background: '#b22', color: 'white', borderRadius: 8, padding: '12px 32px', fontSize: 18 }}
+          onClick={() => setShowForm(true)}
+        >
+          Afficher le formulaire
+        </button>
       </div>
     );
   }
 
   // Si une demande de badge est validée, afficher le formulaire
   if (demandeId && demandeType === 'BADGE' && showForm) {
-    return <DemandeBadgeForm demandeId={demandeId} typeDemande={demandeType} />;
+    return <DemandeBadgeFormWizard />;
   }
 
   // Si une demande de dépôt est validée, afficher le formulaire de dépôt
@@ -151,7 +174,12 @@ const DemandeBadgePage = () => {
   // Si aucune demande en cours, afficher le formulaire de démarrage
   if (!demandeId) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px' }}>
+      <div className="main-content" style={{ padding: '20px' }}>
+        {error && (
+          <div className="alert alert-error" style={{ color: 'red', marginBottom: 20 }}>
+            {error}
+          </div>
+        )}
         <h2>Nouvelle demande</h2>
         <label>Type de demande : </label>
         <select value={typeDemande} onChange={e => setTypeDemande(e.target.value)} style={{ marginRight: 10 }}>

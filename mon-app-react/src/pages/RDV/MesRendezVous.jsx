@@ -147,11 +147,44 @@ const MesRendezVous = () => {
     }
   };
 
+  // Nouvelle fonction pour confirmer la récupération du badge
+  const handleConfirmerRetrait = async (demandeId) => {
+    try {
+      const response = await fetch(`http://localhost:8081/api/demandes/${demandeId}/confirmer-retrait`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Erreur lors de la confirmation du retrait');
+      alert('Merci, votre confirmation a bien été prise en compte !');
+      setRdvs(rdvs => rdvs.map(r => r.id === demandeId ? { ...r, statut: 'BADGE_RECUPERE' } : r));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Nouvelle fonction pour clôturer une demande
+  const handleCloturer = async (rdvId, type) => {
+    try {
+      const response = await fetch(`http://localhost:8081/api/demandes/${rdvId}/cloturer`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Erreur lors de la clôture de la demande');
+      
+      setRdvs(rdvs => rdvs.map(r => 
+        r.id === rdvId ? { ...r, statut: 'CLOTUREE' } : r
+      ));
+      alert('Demande clôturée avec succès !');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div>Chargement des rendez-vous...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="main-content" style={{ padding: '20px' }}>
       <h2>Mes rendez-vous</h2>
       {rdvs.length === 0 ? (
         <p>Aucun rendez-vous trouvé.</p>
@@ -192,9 +225,7 @@ const MesRendezVous = () => {
                   <td style={styles.td}>
                     {rdv.confirme && rdv.delaiRappel ? (
                       <span>
-                        {rdv.delaiRappel === 2 && '2 heures avant'}
-                        {rdv.delaiRappel === 24 && '1 jour avant'}
-                        {rdv.delaiRappel === 48 && '2 jours avant'}
+                        {rdv.delaiRappel === 1 ? '1 heure avant' : `${rdv.delaiRappel} heures avant`}
                       </span>
                     ) : rdv.confirme && (
                       <select
@@ -207,13 +238,29 @@ const MesRendezVous = () => {
                         }}
                       >
                         <option value="">Choisir un délai</option>
-                        <option value="2">2 heures avant</option>
-                        <option value="24">1 jour avant</option>
-                        <option value="48">2 jours avant</option>
+                        {Array.from({ length: 72 }, (_, i) => (
+                          <option key={i+1} value={i+1}>
+                            {i+1} {i+1 === 1 ? 'heure' : 'heures'} avant
+                          </option>
+                        ))}
                       </select>
                     )}
                   </td>
                   <td style={styles.td}>
+                    {/* Bouton de clôture pour dépôt */}
+                    {rdv.type === 'DEPOT' && (['DEPOT_DEMANDE', 'CONFIRME', 'RDV_CONFIRME', 'Confirmé', 'confirmé'].includes(rdv.statut) || (rdv.statut === 'VALIDATION_ADMIN' && rdv.confirme)) && new Date(rdv.dateProposee).getTime() <= Date.now() && (
+                      <button onClick={() => handleCloturer(rdv.id, 'DEPOT')} style={{...styles.button.confirmer, marginRight: '8px'}}> Dépôt avec succès </button>
+                    )}
+                    {/* Bouton de clôture pour récupération */}
+                    {rdv.type === 'RECUPERATION' && (['RECUPERATION_DEMANDE', 'CONFIRME', 'RDV_CONFIRME', 'Confirmé', 'confirmé'].includes(rdv.statut) || (rdv.statut === 'VALIDATION_ADMIN' && rdv.confirme)) && new Date(rdv.dateProposee).getTime() <= Date.now() && (
+                      <button onClick={() => handleCloturer(rdv.id, 'RECUPERATION')} style={{...styles.button.confirmer, marginRight: '8px'}}> Récupération avec succès </button>
+                    )}
+                    {/* Bouton de clôture pour badge */}
+                    {rdv.type === 'BADGE' && (rdv.statut === 'RECUPERATION_CONFIRME' || (rdv.statut === 'VALIDATION_ADMIN' && rdv.confirme)) && new Date(rdv.dateProposee).getTime() <= Date.now() && (
+                      <button onClick={() => handleCloturer(rdv.id, 'BADGE')} style={{...styles.button.confirmer, marginRight: '8px'}}> Confirmation de récupération de badge </button>
+                    )}
+
+                    {/* Boutons existants */}
                     {!rdv.confirme && !rdv.type && (
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button 

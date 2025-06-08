@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,7 +53,8 @@ public class DemandeServiceImpl implements DemandeService {
         logger.info("[DEMANDE BADGE] Type reçu : {}", dto.getType());
         logger.info("[DEMANDE BADGE] Formulaire reçu : {}", dto.getFormulaire());
         Demande demande = new Demande();
-        demande.setUtilisateurId(dto.getUtilisateurId());
+        Utilisateur utilisateur = utilisateurRepository.findById(dto.getUtilisateurId()).orElse(null);
+        demande.setUtilisateur(utilisateur);
         demande.setFormulaire(dto.getFormulaire());
         // Statut selon le type de demande
         if (dto.getType() == TypeDemande.DEPOT || dto.getType() == TypeDemande.RECUPERATION) {
@@ -68,6 +71,27 @@ public class DemandeServiceImpl implements DemandeService {
         Demande savedDemande = demandeRepository.save(demande);
         logger.info("[DEMANDE BADGE] Formulaire sauvegardé en base : {}", savedDemande.getFormulaire());
 
+        // Création automatique du rendez-vous pour DEPOT ou RECUPERATION
+        if (dto.getType() == TypeDemande.DEPOT || dto.getType() == TypeDemande.RECUPERATION) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode form = mapper.readTree(dto.getFormulaire());
+                String date = form.has("dateSouhaitee") ? form.get("dateSouhaitee").asText() : null;
+                String heure = form.has("heureSouhaitee") ? form.get("heureSouhaitee").asText() : "09:00";
+                if (date != null) {
+                    LocalDateTime dateProposee = LocalDateTime.parse(date + "T" + heure);
+                    RendezVous rdv = new RendezVous();
+                    rdv.setDemandeId(savedDemande.getId());
+                    rdv.setDateProposee(dateProposee);
+                    rdv.setConfirme(false);
+                    rdv.setModifie(false);
+                    rdvRepository.save(rdv);
+                }
+            } catch (Exception e) {
+                logger.error("Erreur lors de la création automatique du rendez-vous : " + e.getMessage());
+            }
+        }
+
         // Notifier tous les admins par email
         List<Utilisateur> admins = utilisateurRepository.findByRole(Role.ADMIN);
         logger.info("[DEMANDE BADGE] {} admin(s) trouvé(s) pour notification.", admins.size());
@@ -82,7 +106,7 @@ public class DemandeServiceImpl implements DemandeService {
                 String htmlContent = "<p>Bonjour Admin,</p>" +
                         "<p>Un utilisateur a fait une demande de badge.</p>" +
                         "<ul>" +
-                        "<li>ID utilisateur : " + dto.getUtilisateurId() + "</li>" +
+                        "<li>ID utilisateur : " + (utilisateur != null ? utilisateur.getId() : "Non défini") + "</li>" +
                         "<li>Formulaire : " + dto.getFormulaire() + "</li>" +
                         "<li>Date de la demande : " + demande.getDateDemande() + "</li>" +
                         "</ul>" +
@@ -95,12 +119,11 @@ public class DemandeServiceImpl implements DemandeService {
             }
         }
         // Ajout de la notification pour les admins
-        Utilisateur utilisateur = utilisateurRepository.findById(dto.getUtilisateurId()).orElse(null);
         String notifMsg = "Nouvelle demande de badge de l'utilisateur : ";
         if (utilisateur != null) {
             notifMsg += utilisateur.getNom() + " " + utilisateur.getPrenom();
         } else {
-            notifMsg += "ID " + dto.getUtilisateurId();
+            notifMsg += "ID " + (utilisateur != null ? utilisateur.getId() : "Non défini");
         }
         Notification notif = new Notification("BADGE_REQUEST", notifMsg, null); // null = notification globale
         notificationRepository.save(notif);
@@ -119,7 +142,7 @@ public class DemandeServiceImpl implements DemandeService {
         Notification notif = new Notification(
             "BADGE_ACCEPTE_ADMIN",
             "Votre badge a été accepté par l'administrateur.",
-            demande.getUtilisateurId()
+            demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null
         );
         notificationRepository.save(notif);
         // Notification à tous les superAdmins : demande à valider
@@ -154,7 +177,7 @@ public class DemandeServiceImpl implements DemandeService {
         Notification notif = new Notification(
             "BADGE_ACCEPTE_ADMIN",
             "Votre badge a été accepté par l'administrateur.",
-            demande.getUtilisateurId()
+            demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null
         );
         notificationRepository.save(notif);
         return mapToDto(saved);
@@ -170,7 +193,7 @@ public class DemandeServiceImpl implements DemandeService {
         Notification notif = new Notification(
             "BADGE_ACCEPTE_SUPERADMIN",
             "Votre badge a été accepté par le super administrateur.",
-            demande.getUtilisateurId()
+            demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null
         );
         notificationRepository.save(notif);
         return mapToDto(saved);
@@ -183,19 +206,19 @@ public class DemandeServiceImpl implements DemandeService {
 
     @Override
     public List<DemandeResponseDTO> getByUtilisateur(Long utilisateurId) {
-        return demandeRepository.findByUtilisateurId(utilisateurId).stream().map(this::mapToDto).collect(Collectors.toList());
+        return demandeRepository.findByUtilisateur_Id(utilisateurId).stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     private DemandeResponseDTO mapToDto(Demande demande) {
         DemandeResponseDTO dto = new DemandeResponseDTO();
         dto.setId(demande.getId());
-        dto.setUtilisateurId(demande.getUtilisateurId());
+        dto.setUtilisateurId(demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null);
         dto.setFormulaire(demande.getFormulaire());
         dto.setStatut(demande.getStatut());
         dto.setType(demande.getType());
         dto.setDelaiRappel(demande.getDelaiRappel());
         // Ajout nom et prénom utilisateur
-        Utilisateur user = utilisateurRepository.findById(demande.getUtilisateurId()).orElse(null);
+        Utilisateur user = utilisateurRepository.findById(demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null).orElse(null);
         if (user != null) {
             dto.setNomUtilisateur(user.getNom());
             dto.setPrenomUtilisateur(user.getPrenom());
@@ -267,5 +290,35 @@ public class DemandeServiceImpl implements DemandeService {
         RendezVous rdv = rdvs.get(0); // On prend le premier (cas général : un seul rdv par demande)
         rdv.setDelaiRappel(delaiRappel);
         rdvRepository.save(rdv);
+    }
+
+    @Override
+    public DemandeResponseDTO cloturerDemande(Long demandeId) {
+        Demande demande = demandeRepository.findById(demandeId)
+            .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
+        
+        // Vérifier que la demande peut être clôturée
+        if (demande.getType() == TypeDemande.DEPOT && demande.getStatut() != StatutDemande.DEPOT_DEMANDE) {
+            throw new RuntimeException("La demande de dépôt doit être en statut DEPOT_DEMANDE pour être clôturée");
+        }
+        if (demande.getType() == TypeDemande.RECUPERATION && demande.getStatut() != StatutDemande.RECUPERATION_DEMANDE) {
+            throw new RuntimeException("La demande de récupération doit être en statut RECUPERATION_DEMANDE pour être clôturée");
+        }
+        if (demande.getType() == TypeDemande.BADGE && demande.getStatut() != StatutDemande.RECUPERATION_CONFIRME) {
+            throw new RuntimeException("La demande de badge doit être en statut RECUPERATION_CONFIRME pour être clôturée");
+        }
+
+        demande.setStatut(StatutDemande.CLOTUREE);
+        Demande saved = demandeRepository.save(demande);
+
+        // Créer une notification pour l'employé
+        Notification notif = new Notification(
+            "DEMANDE_CLOTUREE",
+            "Votre demande a été clôturée avec succès.",
+            demande.getUtilisateur() != null ? demande.getUtilisateur().getId() : null
+        );
+        notificationRepository.save(notif);
+
+        return mapToDto(saved);
     }
 }
