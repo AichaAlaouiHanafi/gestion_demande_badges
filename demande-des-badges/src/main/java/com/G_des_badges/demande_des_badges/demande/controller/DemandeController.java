@@ -41,6 +41,8 @@ import java.util.zip.ZipOutputStream;
 import java.util.stream.Collectors;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/api/demandes")
 public class DemandeController {
@@ -722,5 +724,23 @@ public class DemandeController {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=formulaire_" + id + ".pdf")
             .contentType(MediaType.APPLICATION_PDF)
             .body(pdfBytes);
+    }
+
+    @GetMapping("/par-departement")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<DemandeResponseDTO> getDemandesParDepartement(Authentication authentication) {
+        String email = authentication.getName();
+        Utilisateur admin = utilisateurRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Admin non trouvé"));
+        if (admin.getDepartement() == null) {
+            return List.of();
+        }
+        Long departementId = admin.getDepartement().getDepartement_id();
+        List<Demande> demandes = demandeRepository.findAll()
+            .stream()
+            .filter(d -> d.getUtilisateur() != null && d.getUtilisateur().getDepartement() != null
+                && d.getUtilisateur().getDepartement().getDepartement_id().equals(departementId))
+            .collect(Collectors.toList());
+        return demandeService.mapToDtoList(demandes);
     }
 }

@@ -12,17 +12,21 @@ const ValidationFormAdmin = () => {
   const [rdvDate, setRdvDate] = useState('');
   const [rdvTime, setRdvTime] = useState('');
   const [rdvDemandeId, setRdvDemandeId] = useState(null);
-  const role = localStorage.getItem('role');
-  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
+  const role = user?.role || localStorage.getItem('role');
   const departementId = user?.departement?.id;
   const [utilisateurs, setUtilisateurs] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8081/api/demandes', {
+        let url = 'http://localhost:8081/api/demandes';
+        if (role === 'ADMIN') {
+          url = 'http://localhost:8081/api/demandes/par-departement';
+        }
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

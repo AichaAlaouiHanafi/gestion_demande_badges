@@ -22,13 +22,22 @@ const ListeDemandes = () => {
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [selectedDemande, setSelectedDemande] = useState(null);
 
+  const user = JSON.parse(localStorage.getItem('user'));
+  const role = user?.role || localStorage.getItem('role');
+  const departementId = user?.departement?.id;
+
   // Définition de fetchDemandes accessible partout
   const fetchDemandes = async () => {
     setLoading(true);
     console.log("fetchDemandes appelé !");
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8081/api/demandes', {
+      let url = 'http://localhost:8081/api/demandes';
+      if (role === 'ADMIN') {
+        url = 'http://localhost:8081/api/demandes/par-departement';
+      }
+      // SUPERADMIN et autres rôles utilisent toujours /api/demandes
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,11 +79,6 @@ const ListeDemandes = () => {
   const handleStart = () => setShowForm(true);
 
   if (loading) return <p>Chargement des demandes...</p>;
-
-  // Récupérer le département de l'utilisateur connecté
-  const user = JSON.parse(localStorage.getItem('user'));
-  const role = user?.role || localStorage.getItem('role');
-  const departementId = user?.departement?.id;
 
   // Filtrage par type ET par département (pour ADMIN)
   const demandesFiltrees = demandes.filter(d => {

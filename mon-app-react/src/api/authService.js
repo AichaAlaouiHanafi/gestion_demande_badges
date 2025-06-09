@@ -325,6 +325,13 @@ export const authService = {
       console.error('Erreur lors de la création de l\'utilisateur:', error);
       throw error;
     }
+  },
+
+  getUtilisateursByDepartement: (departementId) => {
+    const token = localStorage.getItem('token');
+    return axios.get(`${API_URL}/utilisateurs/par-departement/${departementId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
   }
 };
 

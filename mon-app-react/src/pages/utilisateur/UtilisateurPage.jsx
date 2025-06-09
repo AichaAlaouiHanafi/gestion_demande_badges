@@ -31,9 +31,14 @@ const UtilisateurPage = () => {
     setErreur(null);
 
     try {
-      console.log("📥 Récupération des utilisateurs visibles (via authService)");
-      const response = await authService.getUtilisateursVisibles();
-      console.log("✅ Utilisateurs récupérés :", response.data);
+      let response;
+      if (role === 'ADMIN' && departementId) {
+        response = await authService.getUtilisateursByDepartement(departementId);
+      } else if (role === 'SUPERADMIN') {
+        response = await authService.getUtilisateursVisibles();
+      } else {
+        response = await authService.getUtilisateursVisibles();
+      }
       setUtilisateurs(response.data);
     } catch (err) {
       console.error("❌ Erreur lors de la récupération des utilisateurs :", err);

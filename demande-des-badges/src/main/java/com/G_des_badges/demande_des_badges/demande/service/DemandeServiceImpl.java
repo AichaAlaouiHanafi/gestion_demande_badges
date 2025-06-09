@@ -131,7 +131,10 @@ public class DemandeServiceImpl implements DemandeService {
         logger.info("[NOTIF] Notification BADGE_REQUEST ajoutée !");
         return mapToDto(savedDemande);
     }
-
+    @Override
+    public List<DemandeResponseDTO> mapToDtoList(List<Demande> demandes) {
+        return demandes.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
     @Override
     public DemandeResponseDTO validerParAdmin(Long id) {
         Demande demande = demandeRepository.findById(id).orElseThrow();

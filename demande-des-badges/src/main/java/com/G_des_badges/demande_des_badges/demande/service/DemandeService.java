@@ -26,4 +26,5 @@ public interface DemandeService {
     void configurerRappelDemande(Long demandeId, Integer delaiRappel);
     // Nouvelle méthode pour clôturer une demande
     DemandeResponseDTO cloturerDemande(Long demandeId);
+    List<DemandeResponseDTO> mapToDtoList(List<com.G_des_badges.demande_des_badges.demande.entity.Demande> demandes);
 }
